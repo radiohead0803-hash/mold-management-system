@@ -1,0 +1,465 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft,
+  AlertTriangle,
+  Wrench,
+  Camera,
+  MapPin,
+  Save,
+  Upload,
+  X,
+  CheckCircle
+} from 'lucide-react';
+
+interface MoldBasicInfo {
+  moldId: string;
+  name: string;
+  location: string;
+}
+
+interface RepairRequestData {
+  moldId: string;
+  moldName: string;
+  requester: string;
+  urgency: 'low' | 'medium' | 'high' | 'urgent';
+  issueType: string;
+  description: string;
+  location: string;
+  images: File[];
+  gpsLocation: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  } | null;
+}
+
+const RepairRequest: React.FC = () => {
+  const { moldId } = useParams<{ moldId: string }>();
+  const navigate = useNavigate();
+  
+  const [moldInfo, setMoldInfo] = useState<MoldBasicInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  
+  const [requestData, setRequestData] = useState<RepairRequestData>({
+    moldId: moldId || '',
+    moldName: '',
+    requester: '',
+    urgency: 'medium',
+    issueType: '',
+    description: '',
+    location: '',
+    images: [],
+    gpsLocation: null
+  });
+
+  const issueTypes = [
+    '기계적 결함',
+    '전기적 문제',
+    '냉각 시스템',
+    '이젝터 문제',
+    '표면 손상',
+    '치수 불량',
+    '기타'
+  ];
+
+  useEffect(() => {
+    if (moldId) {
+      fetchMoldInfo();
+      getCurrentLocation();
+    }
+  }, [moldId]);
+
+  const fetchMoldInfo = async () => {
+    try {
+      const token = localStorage.getItem('qr_session_token');
+      if (!token) {
+        throw new Error('QR 세션이 만료되었습니다.');
+      }
+
+      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('금형 정보를 불러올 수 없습니다.');
+      }
+
+      const data = await response.json();
+      setMoldInfo({
+        moldId: data.moldId,
+        name: data.name,
+        location: data.location
+      });
+      
+      setRequestData(prev => ({
+        ...prev,
+        moldName: data.name,
+        location: data.location
+      }));
+    } catch (error) {
+      console.error('Mold info fetch error:', error);
+      setError(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            const address = `위도: ${latitude.toFixed(6)}, 경도: ${longitude.toFixed(6)}`;
+            
+            setRequestData(prev => ({
+              ...prev,
+              gpsLocation: {
+                latitude,
+                longitude,
+                address
+              }
+            }));
+          } catch (error) {
+            console.error('주소 변환 실패:', error);
+          } finally {
+            setIsGettingLocation(false);
+          }
+        },
+        (error) => {
+          console.error('위치 정보 획득 실패:', error);
+          setError('위치 정보를 가져올 수 없습니다.');
+          setIsGettingLocation(false);
+        }
+      );
+    } else {
+      setError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+      setIsGettingLocation(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof RepairRequestData, value: any) => {
+    setRequestData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setRequestData(prev => ({
+      ...prev,
+      images: [...prev.images, ...files]
+    }));
+  };
+
+  const removeImage = (index: number) => {
+    setRequestData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const fillTestData = () => {
+    setRequestData(prev => ({
+      ...prev,
+      requester: '작업자A',
+      urgency: 'high',
+      issueType: '이젝터 문제',
+      description: '이젝터 핀이 제대로 작동하지 않습니다. 제품이 금형에서 분리되지 않아 생산이 중단되었습니다. 긴급 수리가 필요합니다.'
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!requestData.requester || !requestData.issueType || !requestData.description) {
+      alert('필수 항목을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem('qr_session_token');
+      
+      const response = await fetch('http://localhost:5001/api/worker/repair-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error('수리 요청 등록에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      
+      alert(`수리 요청이 성공적으로 등록되었습니다!\n요청번호: ${result.repairRequest.requestNumber}\n관리자에게 긴급 알림이 전송되었습니다.`);
+      navigate(`/worker/mold/${moldId}`);
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert(error instanceof Error ? error.message : '등록 중 오류가 발생했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">금형 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-sm p-6 max-w-md w-full text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-neutral-900 mb-2">오류 발생</h2>
+          <p className="text-neutral-600 mb-4">{error}</p>
+          <button
+            onClick={() => navigate(`/worker/mold/${moldId}`)}
+            className="w-full btn-primary"
+          >
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-neutral-50">
+      {/* Header */}
+      <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 text-neutral-500 hover:text-neutral-700"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <h1 className="text-lg font-semibold text-neutral-900">수리 요청</h1>
+              <p className="text-sm text-neutral-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={fillTestData}
+                className="btn-secondary text-sm"
+              >
+                테스트 데이터
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {submitting ? '전송 중...' : '요청 전송'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {/* 금형 정보 */}
+        {moldInfo && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Wrench className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900">{moldInfo.moldId}</h3>
+                <p className="text-neutral-600">{moldInfo.name}</p>
+                <p className="text-sm text-neutral-500">위치: {moldInfo.location}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 요청자 정보 */}
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="text-lg font-medium text-neutral-900 mb-4">요청자 정보</h4>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                요청자명 *
+              </label>
+              <input
+                type="text"
+                value={requestData.requester}
+                onChange={(e) => handleInputChange('requester', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="요청자명을 입력하세요"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 문제 정보 */}
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="text-lg font-medium text-neutral-900 mb-4">문제 정보</h4>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                긴급도 *
+              </label>
+              <select
+                value={requestData.urgency}
+                onChange={(e) => handleInputChange('urgency', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="low">낮음</option>
+                <option value="medium">보통</option>
+                <option value="high">높음</option>
+                <option value="urgent">긴급</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                문제 유형 *
+              </label>
+              <select
+                value={requestData.issueType}
+                onChange={(e) => handleInputChange('issueType', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">문제 유형을 선택하세요</option>
+                {issueTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                상세 설명 *
+              </label>
+              <textarea
+                value={requestData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={4}
+                placeholder="문제 상황을 자세히 설명해주세요"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* GPS 위치 정보 */}
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="text-lg font-medium text-neutral-900 mb-4 flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            위치 정보
+          </h4>
+          
+          {isGettingLocation ? (
+            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              <span className="text-blue-700">위치 정보를 가져오는 중...</span>
+            </div>
+          ) : requestData.gpsLocation ? (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-green-800">위치 정보 확인됨</p>
+                  <p className="text-sm text-green-700 mt-1">{requestData.gpsLocation.address}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <span className="text-yellow-800">위치 정보가 필요합니다</span>
+                </div>
+                <button
+                  onClick={getCurrentLocation}
+                  className="btn-secondary text-sm"
+                >
+                  위치 가져오기
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 사진 첨부 */}
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="text-lg font-medium text-neutral-900 mb-4 flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            문제 사진
+          </h4>
+          
+          <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center">
+            <Upload className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
+            <p className="text-neutral-600 mb-2">문제 상황을 보여주는 사진을 업로드하세요</p>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id="image-upload"
+            />
+            <label
+              htmlFor="image-upload"
+              className="btn-primary cursor-pointer"
+            >
+              파일 선택
+            </label>
+          </div>
+          
+          {requestData.images.length > 0 && (
+            <div className="mt-4">
+              <h5 className="text-sm font-medium text-neutral-700 mb-2">업로드된 이미지</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {requestData.images.map((image, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`문제 사진 ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RepairRequest;

@@ -1,0 +1,456 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  BarChart3, 
+  TrendingUp, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock,
+  MapPin,
+  Settings,
+  RefreshCw
+} from 'lucide-react';
+import LineChart from '../../components/charts/LineChart';
+import DoughnutChart from '../../components/charts/DoughnutChart';
+
+interface KPIData {
+  totalMolds: number;
+  checkRate: string;
+  pendingInspections: number;
+  activeRepairs: number;
+  moldsByStatus: {
+    production: number;
+    repair: number;
+    inspection: number;
+  };
+}
+
+interface Activity {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  status: string;
+  moldId?: number;
+}
+
+const AdminDashboard: React.FC = () => {
+  const [kpiData, setKpiData] = useState<KPIData | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [chartPeriod, setChartPeriod] = useState('7d');
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [kpiResponse, activitiesResponse] = await Promise.all([
+        fetch('/api/dash/kpi', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        }),
+        fetch('/api/dash/activities?limit=10', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        })
+      ]);
+
+      if (!kpiResponse.ok || !activitiesResponse.ok) {
+        throw new Error('데이터를 불러오는데 실패했습니다.');
+      }
+
+      const kpiResult = await kpiResponse.json();
+      const activitiesResult = await activitiesResponse.json();
+
+      setKpiData(kpiResult);
+      setActivities(activitiesResult);
+    } catch (error) {
+      console.error('Dashboard data fetch error:', error);
+      setError(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return '방금 전';
+    if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}시간 전`;
+    return `${Math.floor(diffInMinutes / 1440)}일 전`;
+  };
+
+  const getKpiCards = () => {
+    if (!kpiData) return [];
+    
+    return [
+      { 
+        title: '총 금형 수', 
+        value: kpiData.totalMolds.toString(), 
+        change: '+0', 
+        icon: Settings, 
+        color: 'text-primary-600' 
+      },
+      { 
+        title: '점검률', 
+        value: kpiData.checkRate, 
+        change: '+0%', 
+        icon: CheckCircle, 
+        color: 'text-accent-green' 
+      },
+      { 
+        title: '예정 점검', 
+        value: kpiData.pendingInspections.toString(), 
+        change: '+0', 
+        icon: AlertTriangle, 
+        color: 'text-accent-orange' 
+      },
+      { 
+        title: '수리 진행', 
+        value: kpiData.activeRepairs.toString(), 
+        change: '+0', 
+        icon: Clock, 
+        color: 'text-accent-red' 
+      },
+    ];
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl lg:text-4xl font-semibold text-neutral-900">대시보드</h1>
+          <p className="text-neutral-600 mt-2">금형관리 현황을 한눈에 확인하세요</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={fetchDashboardData}
+            className="btn-secondary"
+            disabled={loading}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            새로고침
+          </button>
+          <button className="btn-secondary hidden sm:flex">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            리포트
+          </button>
+          <button className="btn-primary">
+            <TrendingUp className="mr-2 h-4 w-4" />
+            분석
+          </button>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">오류 발생</h3>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && !kpiData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="card p-6 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="h-4 bg-neutral-200 rounded w-20 mb-3"></div>
+                  <div className="h-8 bg-neutral-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-neutral-200 rounded w-24"></div>
+                </div>
+                <div className="w-12 h-12 bg-neutral-200 rounded-xl"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* KPI Cards */}
+      {!loading && kpiData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {getKpiCards().map((kpi, index) => {
+            const Icon = kpi.icon;
+            return (
+              <div key={index} className="card p-6 card-hover cursor-pointer group">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-neutral-600 truncate">{kpi.title}</p>
+                    <p className="text-2xl font-semibold text-neutral-900 mt-2">{kpi.value}</p>
+                    <p className={`text-sm mt-1 ${kpi.change.startsWith('+') ? 'text-accent-green' : 'text-accent-red'}`}>
+                      {kpi.change} 전월대비
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-xl bg-neutral-50 group-hover:bg-neutral-100 transition-colors duration-150 ${kpi.color}`}>
+                    <Icon className="h-6 w-6" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Chart 1 - 타수 및 가동률 추이 */}
+        <div className="card p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+            <h3 className="text-xl font-semibold text-neutral-900">타수 및 가동률 추이</h3>
+            <select 
+              className="text-sm border border-neutral-200 rounded-lg px-3 py-2 bg-white focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition-all duration-150"
+              value={chartPeriod}
+              onChange={(e) => setChartPeriod(e.target.value)}
+            >
+              <option>최근 7일</option>
+              <option>최근 30일</option>
+              <option>최근 3개월</option>
+            </select>
+          </div>
+          <div className="h-80">
+            <LineChart 
+              data={{
+                labels: ['11/1', '11/2', '11/3', '11/4', '11/5', '11/6', '11/7'],
+                datasets: [
+                  {
+                    label: '일일 타수',
+                    data: [1250, 1380, 1420, 1180, 1650, 1520, 1340],
+                    borderColor: '#0ea5e9',
+                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                    fill: true,
+                  },
+                  {
+                    label: '가동률 (%)',
+                    data: [85, 92, 88, 76, 95, 89, 83],
+                    borderColor: '#30d158',
+                    backgroundColor: 'rgba(48, 209, 88, 0.1)',
+                    fill: true,
+                  }
+                ]
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Chart 2 - 정기점검 현황 */}
+        <div className="card p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+            <h3 className="text-xl font-semibold text-neutral-900">정기점검 현황</h3>
+            <div className="flex flex-wrap gap-2">
+              <span className="badge badge-success">완료 156</span>
+              <span className="badge badge-warning">예정 23</span>
+              <span className="badge badge-error">지연 8</span>
+            </div>
+          </div>
+          <div className="h-80">
+            <DoughnutChart 
+              data={{
+                labels: ['완료', '예정', '지연'],
+                datasets: [
+                  {
+                    data: [156, 23, 8],
+                    backgroundColor: [
+                      '#30d158',
+                      '#ff9500', 
+                      '#ff3b30'
+                    ],
+                    borderColor: [
+                      '#30d158',
+                      '#ff9500',
+                      '#ff3b30'
+                    ],
+                    borderWidth: 2,
+                  }
+                ]
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activities Section */}
+      <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-neutral-900">최근 활동</h3>
+            <button className="text-sm text-primary-600 hover:text-primary-700 transition-colors duration-150">
+              전체 보기
+            </button>
+          </div>
+          <div className="space-y-4">
+            {activities.length > 0 ? (
+              activities.map((activity) => (
+                <div key={activity.id} className="flex items-center space-x-4 p-4 rounded-lg hover:bg-neutral-50 transition-colors duration-150">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    activity.status === 'completed' ? 'bg-accent-green' :
+                    activity.status === 'pending' ? 'bg-accent-orange' :
+                    'bg-primary-500'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-neutral-900 truncate">{activity.message}</p>
+                    <p className="text-xs text-neutral-500">{formatTimeAgo(activity.timestamp)}</p>
+                  </div>
+                  <span className={`badge flex-shrink-0 ${
+                    activity.status === 'completed' ? 'badge-success' :
+                    activity.status === 'pending' ? 'badge-warning' :
+                    'badge-neutral'
+                  }`}>
+                    {activity.status === 'completed' ? '완료' :
+                     activity.status === 'pending' ? '대기' : '예정'}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <Clock className="h-16 w-16 text-neutral-300 mx-auto mb-4" />
+                <p className="text-neutral-500 text-lg">최근 활동이 없습니다.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions Profile Cards */}
+      <div className="space-y-6">
+        <h3 className="text-2xl font-semibold text-neutral-900">빠른 작업</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 새 금형 등록 카드 */}
+          <div className="card p-6 card-hover cursor-pointer group">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-primary-50 rounded-xl group-hover:bg-primary-100 transition-colors duration-200">
+                  <Settings className="h-6 w-6 text-primary-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-lg font-semibold text-neutral-900 mb-2">새 금형 등록</h4>
+                  <p className="text-sm text-neutral-600 mb-3">새로운 금형을 시스템에 등록하고 관리합니다</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-neutral-900">156</p>
+                        <p className="text-xs text-neutral-500">전체 금형</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-accent-green">+12</p>
+                        <p className="text-xs text-neutral-500">이번 달</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-500 mb-1">마지막 등록</p>
+                      <p className="text-sm font-medium text-neutral-700">2시간 전</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 점검 일정 관리 카드 */}
+            <div className="card p-6 card-hover cursor-pointer group">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-accent-green/10 rounded-xl group-hover:bg-accent-green/20 transition-colors duration-200">
+                  <CheckCircle className="h-6 w-6 text-accent-green" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-lg font-semibold text-neutral-900 mb-2">점검 일정 관리</h4>
+                  <p className="text-sm text-neutral-600 mb-3">정기점검 일정을 관리하고 진행상황을 확인합니다</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-accent-green">23</p>
+                        <p className="text-xs text-neutral-500">예정된 점검</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-accent-orange">8</p>
+                        <p className="text-xs text-neutral-500">지연된 점검</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-500 mb-1">다음 점검</p>
+                      <p className="text-sm font-medium text-neutral-700">내일</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 위치 현황 보기 카드 */}
+            <div className="card p-6 card-hover cursor-pointer group">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors duration-200">
+                  <MapPin className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-lg font-semibold text-neutral-900 mb-2">위치 현황 보기</h4>
+                  <p className="text-sm text-neutral-600 mb-3">금형의 실시간 위치와 이동 현황을 확인합니다</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-blue-600">142</p>
+                        <p className="text-xs text-neutral-500">사용 중</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-neutral-600">14</p>
+                        <p className="text-xs text-neutral-500">대기 중</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-500 mb-1">가동률</p>
+                      <p className="text-sm font-medium text-neutral-700">91.0%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 알림 설정 카드 */}
+            <div className="card p-6 card-hover cursor-pointer group">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors duration-200">
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-lg font-semibold text-neutral-900 mb-2">알림 설정</h4>
+                  <p className="text-sm text-neutral-600 mb-3">시스템 알림과 알림 설정을 관리합니다</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-amber-600">7</p>
+                        <p className="text-xs text-neutral-500">활성 알림</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-accent-red">3</p>
+                        <p className="text-xs text-neutral-500">긴급 알림</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-500 mb-1">마지막 알림</p>
+                      <p className="text-sm font-medium text-neutral-700">30분 전</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;

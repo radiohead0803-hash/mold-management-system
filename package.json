@@ -1,0 +1,20 @@
+{
+  "name": "mold-management-system",
+  "version": "1.0.0",
+  "description": "금형관리 전산화 시스템 - Apple Design Style",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "client:dev": "cd client && npm run dev",
+    "server:dev": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": ["mold", "management", "apple-design", "qr-code", "dashboard"],
+  "author": "Mold Management Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

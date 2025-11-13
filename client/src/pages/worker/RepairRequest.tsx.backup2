@@ -1,0 +1,798 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft,
+  AlertTriangle,
+  Wrench,
+  Camera,
+  MapPin,
+  Save,
+  Upload,
+  X
+} from 'lucide-react';
+
+interface MoldBasicInfo {
+  moldId: string;
+  name: string;
+  location: string;
+}
+
+interface RepairRequestData {
+  // 기본 정보
+  moldId: string;
+  moldName: string;
+  requestNumber: string;
+  requestDate: string;
+  requester: string;
+  requesterDept: string;
+  location: string;
+  requestType: string;
+  urgency: 'low' | 'medium' | 'high' | 'urgent';
+  responsiblePerson: string;
+  responsibleContact: string;
+  
+  // 이상 / 요청 상세
+  issueCategory: string;
+  issueDetail: string;
+  issueDescription: string;
+  issueImages: File[];
+  
+  // 긴급도
+  urgencyReason: string;
+  expectedCompletionDate: string;
+  
+  // 승인
+  approvalRequired: boolean;
+  approver: string;
+  
+  // 수리 세부정보 (수리처 입력)
+  repairType: string;
+  repairMethod: string;
+  repairWorker: string;
+  repairDetail: string;
+  repairCost: number;
+  repairParts: string;
+  repairStartTime: string;
+  repairEndTime: string;
+  repairImages: File[];
+  
+  // 품질관리
+  qualityCheck: string;
+  qualityCheckResult: string;
+  qualityInspector: string;
+  
+  // 승인 / 정산
+  costApproval: string;
+  costApprover: string;
+  invoiceRequired: boolean;
+  
+  // 정산
+  invoiceNumber: string;
+  invoiceDate: string;
+  invoiceAmount: number;
+  
+  // 결과 및 추적
+  finalResult: string;
+  finalInspector: string;
+  completionDate: string;
+  reportFile: File | null;
+  
+  // GPS 위치
+  gpsLocation: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  } | null;
+  
+  // 상태 추적
+  status: 'requested' | 'approved' | 'in_repair' | 'quality_check' | 'completed' | 'rejected';
+  statusHistory: {
+    status: string;
+    timestamp: string;
+    user: string;
+    note: string;
+  }[];
+}
+
+const RepairRequest: React.FC = () => {
+  const { moldId } = useParams<{ moldId: string }>();
+  const navigate = useNavigate();
+  
+  const [moldInfo, setMoldInfo] = useState<MoldBasicInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  
+  const [requestData, setRequestData] = useState<RepairRequestData>({
+    moldId: moldId || '',
+    moldName: '',
+    requestNumber: '',
+    requestDate: new Date().toISOString().split('T')[0],
+    requester: '',
+    requesterDept: '',
+    location: '',
+    requestType: '',
+    urgency: 'medium',
+    responsiblePerson: '',
+    responsibleContact: '',
+    issueCategory: '',
+    issueDetail: '',
+    issueDescription: '',
+    issueImages: [],
+    urgencyReason: '',
+    expectedCompletionDate: '',
+    approvalRequired: false,
+    approver: '',
+    repairType: '',
+    repairMethod: '',
+    repairWorker: '',
+    repairDetail: '',
+    repairCost: 0,
+    repairParts: '',
+    repairStartTime: '',
+    repairEndTime: '',
+    repairImages: [],
+    qualityCheck: '',
+    qualityCheckResult: '',
+    qualityInspector: '',
+    costApproval: '',
+    costApprover: '',
+    invoiceRequired: false,
+    invoiceNumber: '',
+    invoiceDate: '',
+    invoiceAmount: 0,
+    finalResult: '',
+    finalInspector: '',
+    completionDate: '',
+    reportFile: null,
+    gpsLocation: null,
+    status: 'requested',
+    statusHistory: []
+  });
+
+
+  useEffect(() => {
+    if (moldId) {
+      fetchMoldInfo();
+      getCurrentLocation();
+    }
+  }, [moldId]);
+
+  const fetchMoldInfo = async () => {
+    try {
+      const token = localStorage.getItem('qr_session_token');
+      if (!token) {
+        throw new Error('QR 세션이 만료되었습니다.');
+      }
+
+      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('금형 정보를 불러올 수 없습니다.');
+      }
+
+      const data = await response.json();
+      setMoldInfo({
+        moldId: data.moldId,
+        name: data.name,
+        location: data.location
+      });
+      
+      setRequestData(prev => ({
+        ...prev,
+        moldName: data.name,
+        location: data.location
+      }));
+    } catch (error) {
+      console.error('Mold info fetch error:', error);
+      setError(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            const address = `위도: ${latitude.toFixed(6)}, 경도: ${longitude.toFixed(6)}`;
+            
+            setRequestData(prev => ({
+              ...prev,
+              gpsLocation: {
+                latitude,
+                longitude,
+                address
+              }
+            }));
+          } catch (error) {
+            console.error('주소 변환 실패:', error);
+          } finally {
+            setIsGettingLocation(false);
+          }
+        },
+        (error) => {
+          console.error('위치 정보 획득 실패:', error);
+          setError('위치 정보를 가져올 수 없습니다.');
+          setIsGettingLocation(false);
+        }
+      );
+    } else {
+      setError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+      setIsGettingLocation(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof RepairRequestData, value: any) => {
+    setRequestData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setRequestData(prev => ({
+      ...prev,
+      issueImages: [...prev.issueImages, ...files]
+    }));
+  };
+
+  const removeImage = (index: number) => {
+    setRequestData(prev => ({
+      ...prev,
+      issueImages: prev.issueImages.filter((_: File, i: number) => i !== index)
+    }));
+  };
+
+  const fillTestData = () => {
+    setRequestData(prev => ({
+      ...prev,
+      requester: '작업자A',
+      requesterDept: '생산부',
+      urgency: 'high',
+      issueCategory: '이상종류',
+      issueDetail: '이젝터 문제',
+      issueDescription: '이젝터 핀이 제대로 작동하지 않습니다. 제품이 금형에서 분리되지 않아 생산이 중단되었습니다.',
+      urgencyReason: '생산 중단',
+      responsiblePerson: '김책임',
+      responsibleContact: '010-1234-5678'
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!requestData.requester || !requestData.issueCategory || !requestData.issueDescription) {
+      alert('필수 항목을 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem('qr_session_token');
+      
+      const response = await fetch('http://localhost:5001/api/worker/repair-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error('수리 요청 등록에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      
+      alert(`수리 요청이 성공적으로 등록되었습니다!\n요청번호: ${result.repairRequest.requestNumber}\n관리자에게 긴급 알림이 전송되었습니다.`);
+      navigate(`/worker/mold/${moldId}`);
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert(error instanceof Error ? error.message : '등록 중 오류가 발생했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">금형 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-sm p-6 max-w-md w-full text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-neutral-900 mb-2">오류 발생</h2>
+          <p className="text-neutral-600 mb-4">{error}</p>
+          <button
+            onClick={() => navigate(`/worker/mold/${moldId}`)}
+            className="w-full btn-primary"
+          >
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-neutral-50">
+      {/* Header */}
+      <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 text-neutral-500 hover:text-neutral-700"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <h1 className="text-lg font-semibold text-neutral-900">수리 요청</h1>
+              <p className="text-sm text-neutral-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={fillTestData}
+                className="btn-secondary text-sm"
+              >
+                테스트 데이터
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {submitting ? '전송 중...' : '요청 전송'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {/* 금형 정보 */}
+        {moldInfo && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Wrench className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900">{moldInfo.moldId}</h3>
+                <p className="text-neutral-600">{moldInfo.name}</p>
+                <p className="text-sm text-neutral-500">위치: {moldInfo.location}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 1. 기본 정보 */}
+        <div className="bg-white rounded-lg border-2 border-red-200 p-5 shadow-md">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📌</span>
+            <h4 className="text-lg font-bold text-neutral-900">1. 기본 정보</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">수리요청번호</label>
+              <input type="text" value={requestData.requestNumber || '자동생성'} disabled
+                className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">금형번호</label>
+              <input type="text" value={requestData.moldId} disabled
+                className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">금형/품번</label>
+              <input type="text" value={requestData.moldName} disabled
+                className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">요청일자 *</label>
+              <input type="date" value={requestData.requestDate}
+                onChange={(e) => handleInputChange('requestDate', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">요청자 *</label>
+              <input type="text" value={requestData.requester}
+                onChange={(e) => handleInputChange('requester', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="요청자명" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">요청업체명</label>
+              <input type="text" value={requestData.requesterDept}
+                onChange={(e) => handleInputChange('requesterDept', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="부서/업체명" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">수리처(예정)</label>
+              <input type="text" value={requestData.responsiblePerson}
+                onChange={(e) => handleInputChange('responsiblePerson', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="담당 수리처" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">담당 분석자</label>
+              <input type="text" value={requestData.responsibleContact}
+                onChange={(e) => handleInputChange('responsibleContact', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="분석 담당자" />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. 이상 / 요청 상세 */}
+        <div className="bg-white rounded-lg border-2 border-orange-200 p-5 shadow-md">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📋</span>
+            <h4 className="text-lg font-bold text-neutral-900">2. 이상 / 요청 상세</h4>
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">이상종류 *</label>
+                <select value={requestData.issueCategory}
+                  onChange={(e) => handleInputChange('issueCategory', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                  <option value="">선택</option>
+                  <option value="금형 손상">금형 손상</option>
+                  <option value="냉각누수">냉각누수</option>
+                  <option value="게이트 파손">게이트 파손</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">이상상세내용</label>
+                <input type="text" value={requestData.issueDetail}
+                  onChange={(e) => handleInputChange('issueDetail', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  placeholder="원인 / 현상 설명" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">이상사진</label>
+              <input type="file" multiple accept="image/*" onChange={handleImageUpload}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. 긴급도 */}
+        <div className="bg-white rounded-lg border-2 border-yellow-200 p-5 shadow-md">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">⚠️</span>
+            <h4 className="text-lg font-bold text-neutral-900">3. 긴급도</h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">수리긴급도 *</label>
+              <select value={requestData.urgency}
+                onChange={(e) => handleInputChange('urgency', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-500">
+                <option value="low">낮음</option>
+                <option value="medium">보통</option>
+                <option value="high">높음</option>
+                <option value="urgent">긴급</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">예상종료일자</label>
+              <input type="date" value={requestData.expectedCompletionDate}
+                onChange={(e) => handleInputChange('expectedCompletionDate', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-500" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">긴급사유</label>
+              <textarea value={requestData.urgencyReason}
+                onChange={(e) => handleInputChange('urgencyReason', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                rows={2} placeholder="긴급 수리가 필요한 이유" />
+            </div>
+          </div>
+        </div>
+
+        {/* 4. 수리 세부정보 (수리처 입력) */}
+        <div className="bg-white rounded-lg border-2 border-green-200 p-5 shadow-md">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">🔧</span>
+            <h4 className="text-lg font-bold text-neutral-900">4. 수리 세부정보 (수리처 입력)</h4>
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">수리처분</label>
+                <select value={requestData.repairType}
+                  onChange={(e) => handleInputChange('repairType', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                  <option value="">선택</option>
+                  <option value="실제 수리 수행 업체명">실제 수리 수행 업체명</option>
+                  <option value="자체수리">자체수리</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">수리시작일 / 완료일</label>
+                <div className="flex gap-2">
+                  <input type="datetime-local" value={requestData.repairStartTime}
+                    onChange={(e) => handleInputChange('repairStartTime', e.target.value)}
+                    className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">수리작업자</label>
+                <input type="text" value={requestData.repairWorker}
+                  onChange={(e) => handleInputChange('repairWorker', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="수리 담당자명" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">수리내용</label>
+                <input type="text" value={requestData.repairDetail}
+                  onChange={(e) => handleInputChange('repairDetail', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="교체/청소/기타 등 종" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">교체부품내역</label>
+                <input type="text" value={requestData.repairParts}
+                  onChange={(e) => handleInputChange('repairParts', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="부품명, 수량, 단가" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">수리전 사진 / 수리후 사진</label>
+                <input type="file" multiple accept="image/*"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">수리후 시험사항</label>
+              <textarea value={requestData.repairMethod}
+                onChange={(e) => handleInputChange('repairMethod', e.target.value)}
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                rows={2} placeholder="시험성 여부/결과" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">품질관정</label>
+                <select value={requestData.qualityCheck}
+                  onChange={(e) => handleInputChange('qualityCheck', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                  <option value="">선택</option>
+                  <option value="양호">양호</option>
+                  <option value="재작업">재작업</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. 승인/정산 관리 */}
+        <div className="bg-white rounded-lg border-2 border-purple-200 p-5 shadow-md">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">💰</span>
+            <h4 className="text-lg font-bold text-neutral-900">5. 승인/정산 관리</h4>
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">견적</label>
+                <input type="text" value={requestData.costApproval}
+                  onChange={(e) => handleInputChange('costApproval', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="견적금액(원)" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">견적서류부</label>
+                <input type="file" accept=".pdf"
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">승인</label>
+                <input type="text" value={requestData.costApprover}
+                  onChange={(e) => handleInputChange('costApprover', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="결재 후 승인금액 입력" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">승인일자</label>
+                <input type="date" value={requestData.invoiceDate}
+                  onChange={(e) => handleInputChange('invoiceDate', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-purple-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">정산</label>
+                <input type="text" value={requestData.invoiceNumber}
+                  onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  placeholder="세금계산서번호 / 지급일" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 6. 결과 및 추적 관리 */}
+        <div className="bg-white rounded-lg border-2 border-indigo-200 p-5 shadow-md">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📊</span>
+            <h4 className="text-lg font-bold text-neutral-900">6. 결과 및 추적 관리</h4>
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">결과</label>
+                <select value={requestData.finalResult}
+                  onChange={(e) => handleInputChange('finalResult', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                  <option value="">선택</option>
+                  <option value="최종수리결과">최종수리결과</option>
+                  <option value="양호">양호</option>
+                  <option value="재작업">재작업</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">검수일자</label>
+                <input type="date" value={requestData.completionDate}
+                  onChange={(e) => handleInputChange('completionDate', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">검수자</label>
+                <input type="text" value={requestData.finalInspector}
+                  onChange={(e) => handleInputChange('finalInspector', e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="최종검수 담당자명" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">추적</label>
+                <input type="text" value={requestData.status}
+                  disabled
+                  className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg"
+                  placeholder="현재 진행 상태" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">전체진행률</label>
+                <input type="text" disabled
+                  className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg"
+                  placeholder="각 단계 완료율 자동계산" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">지연일수</label>
+                <input type="text" disabled
+                  className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg"
+                  placeholder="예상일 대비 지연 자동계산" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">알림이력</label>
+                <input type="text" disabled
+                  className="w-full px-4 py-2 bg-gray-50 border border-neutral-300 rounded-lg"
+                  placeholder="승인/지연/완료 알림 로그" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">종부</label>
+              <input type="file" accept=".pdf"
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg" />
+              <p className="text-xs text-gray-500 mt-1">수리리포트 (최종 PDF 출력)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* GPS 위치 정보 */}
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="text-lg font-medium text-neutral-900 mb-4 flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            위치 정보
+          </h4>
+          
+          {isGettingLocation ? (
+            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              <span className="text-blue-700">위치 정보를 가져오는 중...</span>
+            </div>
+          ) : requestData.gpsLocation ? (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-green-800">위치 정보 확인됨</p>
+                  <p className="text-sm text-green-700 mt-1">{requestData.gpsLocation.address}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <span className="text-yellow-800">위치 정보가 필요합니다</span>
+                </div>
+                <button
+                  onClick={getCurrentLocation}
+                  className="btn-secondary text-sm"
+                >
+                  위치 가져오기
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 사진 첨부 */}
+        <div className="bg-white rounded-lg border p-4">
+          <h4 className="text-lg font-medium text-neutral-900 mb-4 flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            문제 사진
+          </h4>
+          
+          <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center">
+            <Upload className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
+            <p className="text-neutral-600 mb-2">문제 상황을 보여주는 사진을 업로드하세요</p>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id="image-upload"
+            />
+            <label
+              htmlFor="image-upload"
+              className="btn-primary cursor-pointer"
+            >
+              파일 선택
+            </label>
+          </div>
+          
+          {requestData.issueImages.length > 0 && (
+            <div className="mt-4">
+              <h5 className="text-sm font-medium text-neutral-700 mb-2">업로드된 이미지</h5>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {requestData.issueImages.map((image: File, index: number) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`문제 사진 ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RepairRequest;
