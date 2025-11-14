@@ -129,14 +129,14 @@ const ManufacturingSpecs: React.FC = () => {
 
     return (
       <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-        <div className={`${gradient} px-6 py-3`}>
-          <div className="flex items-center gap-2">
-            {icon}
-            <h2 className="text-base font-bold text-white">{title}</h2>
-          </div>
+        <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 px-6 py-3 flex justify-between items-center">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span className="text-white">□</span> {title}
+          </h2>
+          <span className="text-white text-xs">Creative Auto Module System</span>
         </div>
         
-        <div className="p-6">
+        <div className="p-6 bg-slate-50">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {items.map((item, index) => (
               <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200">
@@ -151,9 +151,9 @@ const ManufacturingSpecs: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      <div className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -163,14 +163,9 @@ const ManufacturingSpecs: React.FC = () => {
               >
                 <ArrowLeft className="h-5 w-5 text-slate-600" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
-                  <Factory className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-slate-900">{moldInfo?.moldId} - 제작사양</h1>
-                  <p className="text-sm text-slate-600">{moldInfo?.name}</p>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold">제작사양</h1>
+                <p className="text-sm text-slate-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
               </div>
             </div>
           </div>
@@ -192,7 +187,7 @@ const ManufacturingSpecs: React.FC = () => {
         </div>
 
         {/* 시스템 자동 입력: 제품 정보 */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-slate-400 to-slate-500 rounded-xl p-6 text-white shadow-lg">
           <h2 className="text-xl font-bold mb-2">✅ 시스템 자동 입력</h2>
           <p className="text-sm opacity-90">품번, 품명 기반으로 자동 생성된 제품 정보</p>
         </div>
@@ -206,7 +201,7 @@ const ManufacturingSpecs: React.FC = () => {
         )}
 
         {/* 제작처 필수 관리 항목 */}
-        <div className="bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl p-6 text-white shadow-lg mt-8">
+        <div className="bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl p-6 text-white shadow-lg mt-8">
           <h2 className="text-xl font-bold mb-2">📋 제작처 필수 관리 항목</h2>
           <p className="text-sm opacity-90">제작처가 입력 후 관리자 승인 대기 중 (필수 항목만 포함)</p>
         </div>
@@ -215,12 +210,12 @@ const ManufacturingSpecs: React.FC = () => {
         <div className="relative">
           {approvalStatus.basic === 'approved' && (
             <div className="absolute top-4 right-4 z-10">
-              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">승인완료</span>
+              <span className="px-3 py-1 bg-slate-500 text-white text-xs font-bold rounded-full">승인완료</span>
             </div>
           )}
           {approvalStatus.basic === 'pending' && (
             <div className="absolute top-4 right-4 z-10">
-              <span className="px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full">승인대기</span>
+              <span className="px-3 py-1 bg-slate-400 text-white text-xs font-bold rounded-full">승인대기</span>
             </div>
           )}
           {renderSpecSection(
@@ -235,12 +230,12 @@ const ManufacturingSpecs: React.FC = () => {
         <div className="relative">
           {approvalStatus.schedule === 'approved' && (
             <div className="absolute top-4 right-4 z-10">
-              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">승인완료</span>
+              <span className="px-3 py-1 bg-slate-500 text-white text-xs font-bold rounded-full">승인완료</span>
             </div>
           )}
           {approvalStatus.schedule === 'pending' && (
             <div className="absolute top-4 right-4 z-10">
-              <span className="px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full">승인대기</span>
+              <span className="px-3 py-1 bg-slate-400 text-white text-xs font-bold rounded-full">승인대기</span>
             </div>
           )}
           {renderSpecSection(
@@ -255,12 +250,12 @@ const ManufacturingSpecs: React.FC = () => {
         <div className="relative">
           {approvalStatus.specs === 'approved' && (
             <div className="absolute top-4 right-4 z-10">
-              <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">승인완료</span>
+              <span className="px-3 py-1 bg-slate-500 text-white text-xs font-bold rounded-full">승인완료</span>
             </div>
           )}
           {approvalStatus.specs === 'pending' && (
             <div className="absolute top-4 right-4 z-10">
-              <span className="px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded-full">승인대기</span>
+              <span className="px-3 py-1 bg-slate-400 text-white text-xs font-bold rounded-full">승인대기</span>
             </div>
           )}
           {renderSpecSection(

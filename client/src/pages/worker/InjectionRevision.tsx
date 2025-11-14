@@ -106,117 +106,127 @@ const InjectionRevision: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      <div className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(`/worker/mold/${moldId}`)}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-lg"
               >
-                <ArrowLeft className="h-5 w-5 text-slate-600" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <GitBranch className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-slate-900">{moldInfo?.moldId} - 리비전관리</h1>
-                  <p className="text-sm text-slate-600">{moldInfo?.name}</p>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold">리비전 관리</h1>
+                <p className="text-sm text-slate-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* 현재 버전 */}
-        <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm opacity-90 mb-1">현재 적용 버전</p>
-              <h2 className="text-3xl font-bold">{revisions.find(r => r.status === 'current')?.version || 'N/A'}</h2>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* 리비전 관리 */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 px-6 py-3 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-white">□</span> 리비전 관리
+            </h2>
+            <span className="text-white text-xs">Creative Auto Module System</span>
+          </div>
+
+          {/* 현재 버전 */}
+          <div className="p-6 bg-slate-50">
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-slate-100 rounded-lg">
+                    <GitBranch className="h-6 w-6 text-slate-700" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">현재 적용 버전</p>
+                    <h2 className="text-3xl font-bold text-slate-900">{revisions.find(r => r.status === 'current')?.version || 'N/A'}</h2>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-600 mb-1">마지막 업데이트</p>
+                  <p className="text-lg font-semibold text-slate-900">{revisions.find(r => r.status === 'current')?.date || 'N/A'}</p>
+                </div>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm opacity-90 mb-1">마지막 업데이트</p>
-              <p className="text-lg font-semibold">{revisions.find(r => r.status === 'current')?.date || 'N/A'}</p>
+
+            {/* 리비전 목록 테이블 */}
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 리비전 목록
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-100 border-b-2 border-slate-300">
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-700 w-24">버전</th>
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">설명</th>
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-700 w-32">작성자</th>
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-700 w-32">날짜</th>
+                    <th className="px-4 py-3 text-left text-sm font-bold text-slate-700">변경내역</th>
+                    <th className="px-4 py-3 text-center text-sm font-bold text-slate-700 w-32">상태</th>
+                    <th className="px-4 py-3 text-center text-sm font-bold text-slate-700 w-40">작업</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {revisions.map((revision) => (
+                    <tr 
+                      key={revision.id}
+                      className={`border-b border-slate-200 hover:bg-slate-50 ${
+                        revision.status === 'current' ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-3">
+                        <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                          revision.status === 'current'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {revision.version}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-900 font-medium">{revision.description}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{revision.author}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{revision.date}</td>
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          {revision.changes.map((change, idx) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5"></div>
+                              <p className="text-xs text-slate-600">{change}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {revision.status === 'current' && (
+                          <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                            현재 버전
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2 justify-center">
+                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="상세보기">
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="다운로드">
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-
-        {/* 리비전 목록 */}
-        <div className="space-y-4">
-          {revisions.map((revision, index) => (
-            <div
-              key={revision.id}
-              className={`bg-white rounded-xl shadow-lg border-2 overflow-hidden transition-all ${
-                revision.status === 'current'
-                  ? 'border-purple-500'
-                  : 'border-slate-200 hover:border-purple-300'
-              }`}
-            >
-              <div className={`px-6 py-4 ${
-                revision.status === 'current'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600'
-                  : 'bg-slate-100'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      revision.status === 'current'
-                        ? 'bg-white text-purple-600'
-                        : 'bg-slate-200 text-slate-700'
-                    }`}>
-                      {revision.version}
-                    </div>
-                    <div>
-                      <h3 className={`font-semibold ${
-                        revision.status === 'current' ? 'text-white' : 'text-slate-900'
-                      }`}>
-                        {revision.description}
-                      </h3>
-                      <p className={`text-sm ${
-                        revision.status === 'current' ? 'text-white/80' : 'text-slate-600'
-                      }`}>
-                        {revision.date} · {revision.author}
-                      </p>
-                    </div>
-                  </div>
-                  {revision.status === 'current' && (
-                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full">
-                      현재 버전
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="p-6">
-                <h4 className="text-sm font-semibold text-slate-700 mb-3">변경 내역</h4>
-                <div className="space-y-2">
-                  {revision.changes.map((change, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-slate-600">{change}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium">
-                    <Eye className="h-4 w-4" />
-                    상세보기
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium">
-                    <Download className="h-4 w-4" />
-                    다운로드
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>

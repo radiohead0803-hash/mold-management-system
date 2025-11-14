@@ -15,18 +15,10 @@ import {
   Clock,
   Wrench,
   TrendingUp,
-  BarChart3,
-  TrendingDown,
-  FileBarChart,
-  PieChart,
-  Zap,
-  Users,
-  UserPlus,
   User,
   Lock,
   Mail,
   Phone,
-  Building,
   Eye,
   ChevronDown,
   ChevronRight,
@@ -35,31 +27,6 @@ import {
   Droplet,
   Thermometer
 } from 'lucide-react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
 
 interface MoldData {
   id: number;
@@ -182,13 +149,9 @@ const MoldInfo: React.FC = () => {
   const [shotHistory, setShotHistory] = useState<ShotRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [reportView, setReportView] = useState<ReportViewType>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showMainMenu, setShowMainMenu] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<{[key: string]: boolean}>({});
   const [showUserModal, setShowUserModal] = useState(false);
-  const [showDailyCheckItems, setShowDailyCheckItems] = useState(false);
-  const [showPeriodicCheckItems, setShowPeriodicCheckItems] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<'mold' | 'product' | null>(null);
 
   // 정기점검 주기 정의
@@ -213,63 +176,6 @@ const MoldInfo: React.FC = () => {
     }
   ];
 
-  // 정기점검 항목 데이터
-  const periodicCheckItems: PeriodicCheckItem[] = [
-    // 기본정보
-    { category: '기본정보', checkItem: '금형번호 / 품명', checkContent: '자동 불러오기', inputType: '자동입력', note: '' },
-    { category: '기본정보', checkItem: '누적 쇼트수', checkContent: '실시간 누적 관리', inputType: '자동입력', note: '알림 기준 트리거' },
-    // 외관 / 구조
-    { category: '외관 / 구조', checkItem: '금형 외관', checkContent: '크랙·마모·변형 여부', inputType: '선택 + 사진', note: '정기점검 필수' },
-    { category: '외관 / 구조', checkItem: '캐비티 / 코어', checkContent: '마모, 크랙, 변색', inputType: '선택 + 촬대사진', note: '' },
-    { category: '외관 / 구조', checkItem: '파팅라인', checkContent: '틈새, 이물, 마모', inputType: '선택', note: '' },
-    { category: '외관 / 구조', checkItem: '게이트부', checkContent: '마모, 손상', inputType: '선택 + 사진', note: '교체여부 기록' },
-    { category: '외관 / 구조', checkItem: '런너부 / 핀', checkContent: '마모, 손상, 변형', inputType: '선택', note: '' },
-    // 냉각 / 유압
-    { category: '냉각 / 유압', checkItem: '냉각라인', checkContent: '막힘, 부식 여부', inputType: '선택 + 유량 측정', note: '' },
-    { category: '냉각 / 유압', checkItem: '유압라인', checkContent: '누유, 압력 이상', inputType: '선택', note: '' },
-    // 작동부
-    { category: '작동부', checkItem: '슬라이드 / 리프터', checkContent: '작동 이상, 마모', inputType: '선택', note: '' },
-    { category: '작동부', checkItem: '에젝터 핀', checkContent: '작동불량, 휨', inputType: '선택', note: '' },
-    { category: '작동부', checkItem: '가이드핀 / 부싱', checkContent: '마모, 휨', inputType: '선택', note: '' },
-    // 부품상태
-    { category: '부품상태', checkItem: '볼트·패킹류', checkContent: '풀림, 손상 여부', inputType: '선택', note: '' },
-    { category: '부품상태', checkItem: '센서류', checkContent: '오동작, 불량', inputType: '선택', note: '자동알림 연결' },
-    // 금형성능
-    { category: '금형성능', checkItem: '제품 불량률', checkContent: '최근 생산불량률(%)', inputType: '수치입력', note: '' },
-    { category: '금형성능', checkItem: '냉각 효율', checkContent: '유량/온도 비교', inputType: '수치입력', note: '선택' },
-    { category: '금형성능', checkItem: '금형수축률', checkContent: '표준 대비 오차(%)', inputType: '수치입력', note: '자동계산 가능' },
-    // 조치사항
-    { category: '조치사항', checkItem: '점검결과 종합', checkContent: '양호 / 정비요 / 수리요', inputType: '선택', note: '대시보드 반영' },
-    { category: '조치사항', checkItem: '수리내역', checkContent: '교체부품 / 조치내용', inputType: '텍스트', note: '' },
-    { category: '조치사항', checkItem: '차기점검 예정', checkContent: '다음 쇼트수 기준', inputType: '자동계산', note: '알림 자동설정' }
-  ];
-
-  // 일상점검 항목 데이터
-  const dailyCheckItems: DailyCheckItem[] = [
-    // 기본정보
-    { category: '기본정보', checkItem: '점검일자', checkContent: 'QR스캔 시 자동기록', inputType: '자동입력', note: 'GPS 포함' },
-    { category: '기본정보', checkItem: '점검자', checkContent: '점검자 이름 / 부서', inputType: '자동입력', note: '로그인 ID 연동' },
-    { category: '기본정보', checkItem: '점검위치', checkContent: 'GPS 좌표 자동입력', inputType: '자동입력', note: '금형 위치 검증' },
-    // 금형 외관
-    { category: '금형 외관', checkItem: '금형 외관 점검', checkContent: '오염/이물 등 발생 여부', inputType: '선택(양호/불량) + 사진', note: '' },
-    { category: '금형 외관', checkItem: '방청유 도포상태', checkContent: '도포 유무 / 균일성 확인', inputType: '선택 + 사진', note: '' },
-    { category: '금형 외관', checkItem: '변호판/QR 상태', checkContent: 'QR 식별 가능 여부', inputType: '선택', note: '' },
-    // 금형 기능부
-    { category: '금형 기능부', checkItem: '게이트 상태', checkContent: '파손·이물·폐색 여부', inputType: '선택 + 사진', note: '' },
-    { category: '금형 기능부', checkItem: '냉각라인 상태', checkContent: '누수·이물·막힘 여부', inputType: '선택 + 사진', note: '' },
-    { category: '금형 기능부', checkItem: '에젝터 작동', checkContent: '작동 불량·걸림 여부', inputType: '선택', note: '' },
-    { category: '금형 기능부', checkItem: '슬라이드/리프터 작동', checkContent: '정상작동 여부', inputType: '선택', note: '' },
-    // 생산 관련
-    { category: '생산 관련', checkItem: '금형온도', checkContent: '적정 온도 유지 여부', inputType: '수치입력(℃)', note: '설정값 ±' },
-    { category: '생산 관련', checkItem: '금형운행상태', checkContent: '운행계 유무·오염', inputType: '선택', note: '' },
-    { category: '생산 관련', checkItem: '이형제 잔량/상태', checkContent: '잔량 부족·오염', inputType: '선택', note: '' },
-    // 보관관리
-    { category: '보관관리', checkItem: '보관위치', checkContent: '지정위치 일치여부', inputType: 'GPS 자동검증', note: '' },
-    { category: '보관관리', checkItem: '금형보관상태', checkContent: '보관장 혹 상태', inputType: '선택 + 사진', note: '' },
-    // 이상조치
-    { category: '이상조치', checkItem: '이상내용', checkContent: '이상발생 시 상세입력', inputType: '텍스트 + 사진', note: '자동 알림연동' },
-    { category: '이상조치', checkItem: '조치내용', checkContent: '조치결과 기록', inputType: '텍스트', note: '담당자 서명 포함' }
-  ];
 
   useEffect(() => {
     fetchMoldData();
@@ -303,13 +209,13 @@ const MoldInfo: React.FC = () => {
       const data = await response.json();
       console.log('금형 데이터 로드 성공:', data);
       
-      // Add default images if not present
+      // Add default images if not present - 범퍼 테스트 이미지
       if (!data.images) {
         data.images = {
-          moldImage: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&h=600&fit=crop',
-          productImage: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&h=600&fit=crop',
+          moldImage: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&h=600&fit=crop', // 금형 제작 이미지
+          productImage: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&h=600&fit=crop', // 자동차 범퍼 이미지
           thumbnails: {
-            moldThumbnail: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=200&h=150&fit=crop',
+            moldThumbnail: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=200&h=150&fit=crop',
             productThumbnail: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&h=150&fit=crop'
           }
         };
@@ -348,13 +254,14 @@ const MoldInfo: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  // formatDate 함수 (향후 사용 예정)
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleDateString('ko-KR', {
+  //     year: 'numeric',
+  //     month: 'short',
+  //     day: 'numeric'
+  //   });
+  // };
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('ko-KR', {
@@ -719,28 +626,28 @@ const MoldInfo: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="sticky top-0 z-40 bg-gradient-to-br from-slate-50/95 via-blue-50/95 to-indigo-50/95 backdrop-blur-md border-b border-white/20 shadow-sm">
         <div className="max-w-7xl mx-auto p-4 md:p-6">
-        {/* Header */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-3 text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-xl transition-all duration-200"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Settings className="h-6 w-6 text-white" />
+          {/* Header */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-3 text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-xl transition-all duration-200"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Settings className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">{moldData.moldId}</h1>
+                  <p className="text-sm text-slate-600 font-medium">{moldData.name}</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">{moldData.moldId}</h1>
-                <p className="text-sm text-slate-600 font-medium">{moldData.name}</p>
-              </div>
-            </div>
-            
-            {/* 상단 메뉴 */}
-            <div className="flex items-center gap-2">
-              {/* 금형정보 버튼 */}
+              
+              {/* 상단 메뉴 */}
+              <div className="flex items-center gap-2">
+                {/* 금형정보 버튼 */}
               <div className="relative">
                 <button
                   onClick={() => setExpandedMenus(prev => ({...prev, moldInfo: !prev.moldInfo}))}
@@ -767,6 +674,15 @@ const MoldInfo: React.FC = () => {
                         <div className="bg-slate-50 border-l-2 border-blue-300">
                           <button
                             onClick={() => {
+                              navigate(`/worker/mold/${moldId}/development-progress`);
+                              setExpandedMenus({});
+                            }}
+                            className="w-full px-8 py-2 text-left hover:bg-white text-sm text-slate-600"
+                          >
+                            개발계획
+                          </button>
+                          <button
+                            onClick={() => {
                               navigate(`/worker/mold/${moldId}/mold-checklist`);
                               setExpandedMenus({});
                             }}
@@ -776,12 +692,12 @@ const MoldInfo: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              navigate(`/worker/mold/${moldId}/development-progress`);
+                              navigate(`/worker/mold/${moldId}/mold-nurturing`);
                               setExpandedMenus({});
                             }}
                             className="w-full px-8 py-2 text-left hover:bg-white text-sm text-slate-600"
                           >
-                            개발진행 현황
+                            금형육성
                           </button>
                           <button
                             onClick={() => {
@@ -803,7 +719,7 @@ const MoldInfo: React.FC = () => {
                       }}
                       className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm text-slate-700"
                     >
-                      제작사양
+                      금형사양
                     </button>
                   </div>
                 )}
@@ -1154,8 +1070,8 @@ const MoldInfo: React.FC = () => {
                 )}
               </div>
             </div>
+            </div>
           </div>
-        </div>
         </div>
       </div>
 
@@ -1261,62 +1177,286 @@ const MoldInfo: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Status */}
-          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl">
-                <CheckCircle className="h-5 w-5 text-white" />
+        {/* 현재상태, 위치, 샷수진행률, 담당자 - 한 줄 */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* 현재 상태 */}
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl">
+                <CheckCircle className="h-6 w-6 text-white" />
               </div>
-              <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${getStatusColor(moldData.status)} shadow-sm`}>
-                {getStatusText(moldData.status)}
-              </span>
+              <div>
+                <p className="text-xs text-slate-600 mb-1">현재 상태</p>
+                <span className={`px-3 py-1 rounded-lg text-sm font-bold ${getStatusColor(moldData.status)}`}>
+                  {getStatusText(moldData.status)}
+                </span>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-slate-900">현재 상태</h3>
-            <p className="text-xs text-slate-600">실시간 모니터링</p>
-          </div>
 
-          {/* Location */}
-          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl mb-3 w-fit">
-              <MapPin className="h-5 w-5 text-white" />
+            {/* 위치 */}
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+                <MapPin className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-600 mb-1">위치</p>
+                <p className="text-lg font-bold text-blue-600">{moldData.location}</p>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">위치</h3>
-            <p className="text-xl font-bold text-blue-600">{moldData.location}</p>
-          </div>
 
-          {/* Shot Count Progress */}
-          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 sm:col-span-2">
-            <div className="flex items-center justify-between mb-3">
-              <div className="p-2.5 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
-                <Activity className="h-5 w-5 text-white" />
+            {/* 샷수 진행률 */}
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl">
+                <Activity className="h-6 w-6 text-white" />
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-slate-900">{moldData.shotCount.toLocaleString()}</p>
-                <p className="text-xs text-slate-600">/ {moldData.maxShotCount.toLocaleString()}</p>
+              <div className="flex-1">
+                <p className="text-xs text-slate-600 mb-1">샷수 진행률</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-slate-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" 
+                      style={{ width: `${(moldData.shotCount / moldData.maxShotCount) * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-bold text-purple-600">{((moldData.shotCount / moldData.maxShotCount) * 100).toFixed(0)}%</span>
+                </div>
               </div>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-2">샷수 진행률</h3>
-            <div className="w-full bg-slate-200 rounded-full h-2.5 mb-2">
-              <div 
-                className="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full transition-all duration-500" 
-                style={{ width: `${(moldData.shotCount / moldData.maxShotCount) * 100}%` }}
-              ></div>
+
+            {/* 담당자 */}
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl">
+                <User className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-600 mb-1">담당자</p>
+                <p className="text-lg font-bold text-orange-600">{moldData.manager}</p>
+              </div>
             </div>
-            <p className="text-xs text-slate-600">{((moldData.shotCount / moldData.maxShotCount) * 100).toFixed(1)}% 완료</p>
           </div>
         </div>
 
 
-        {/* Main Content - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left Column - Actions */}
+        {/* 금형관리 알림, 금형점검 바로가기 - 한 줄 */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 금형관리 알림 */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
+                  <Bell className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">금형관리 알림</h3>
+              </div>
+              {notifications.length > 0 ? (
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {notifications.slice(0, 3).map((notification) => {
+                    const IconComponent = getNotificationIcon(notification.type);
+                    return (
+                      <div key={notification.id} className={`p-3 bg-gradient-to-r ${getNotificationColor(notification.priority)} rounded-lg border text-sm`}>
+                        <div className="flex items-start gap-2">
+                          <IconComponent className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-900">{notification.title}</p>
+                            <p className="text-xs text-slate-700">{notification.message}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">알림이 없습니다</p>
+              )}
+            </div>
+
+            {/* 금형점검 바로가기 */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                  <ClipboardList className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">금형점검 바로가기</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => navigate(`/worker/mold/${moldId}/daily-check`)}
+                  className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-lg border border-blue-200 transition-all"
+                >
+                  <CheckCircle className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-slate-900">일상점검</p>
+                </button>
+                <button
+                  onClick={() => navigate(`/worker/mold/${moldId}/periodic-check`)}
+                  className="p-3 bg-gradient-to-br from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 rounded-lg border border-purple-200 transition-all"
+                >
+                  <Calendar className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-slate-900">정기점검</p>
+                </button>
+                <button
+                  onClick={() => navigate(`/worker/mold/${moldId}/lubrication`)}
+                  className="p-3 bg-gradient-to-br from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 rounded-lg border border-teal-200 transition-all"
+                >
+                  <Droplet className="h-5 w-5 text-teal-600 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-slate-900">습합점검</p>
+                </button>
+                <button
+                  onClick={() => navigate(`/worker/mold/${moldId}/cleaning`)}
+                  className="p-3 bg-gradient-to-br from-cyan-50 to-sky-50 hover:from-cyan-100 hover:to-sky-100 rounded-lg border border-cyan-200 transition-all"
+                >
+                  <Activity className="h-5 w-5 text-cyan-600 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-slate-900">세척점검</p>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 사출조건 관리 - 한 줄 */}
+        {moldData?.injectionConditions && (
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg">
+                  <Thermometer className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">사출조건 관리</h3>
+              </div>
+              <button
+                onClick={() => navigate(`/worker/mold/${moldId}/injection-conditions`)}
+                className="px-4 py-2 bg-gradient-to-r from-red-500 to-orange-600 text-white rounded-lg hover:from-red-600 hover:to-orange-700 text-sm font-medium"
+              >
+                상세보기
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-3 bg-gradient-to-br from-red-50 to-orange-50 rounded-lg border border-red-100">
+                <p className="text-xs font-semibold text-red-600 mb-1">사출온도</p>
+                <p className="text-sm font-bold text-red-700">{moldData.injectionConditions.injectionTemperature}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
+                <p className="text-xs font-semibold text-blue-600 mb-1">사출압력</p>
+                <p className="text-sm font-bold text-blue-700">{moldData.injectionConditions.injectionPressure}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                <p className="text-xs font-semibold text-green-600 mb-1">사출속도</p>
+                <p className="text-sm font-bold text-green-700">{moldData.injectionConditions.injectionSpeed}</p>
+              </div>
+              <div className="p-3 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg border border-purple-100">
+                <p className="text-xs font-semibold text-purple-600 mb-1">사이클타임</p>
+                <p className="text-sm font-bold text-purple-700">{moldData.injectionConditions.cycleTime}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 금형사양 - 한 줄 */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                <Settings className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">금형사양</h3>
+            </div>
+            <button
+              onClick={() => navigate(`/worker/mold/${moldId}/manufacturing-specs`)}
+              className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 text-sm font-medium"
+            >
+              상세보기
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
+              <p className="text-xs font-semibold text-blue-600 mb-1">재질</p>
+              <p className="text-sm font-bold text-blue-800">{moldData.specifications.material}</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+              <p className="text-xs font-semibold text-purple-600 mb-1">중량</p>
+              <p className="text-sm font-bold text-purple-800">{moldData.specifications.weight}</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100">
+              <p className="text-xs font-semibold text-green-600 mb-1">치수</p>
+              <p className="text-sm font-bold text-green-800">{moldData.specifications.dimensions}</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg border border-orange-100">
+              <p className="text-xs font-semibold text-orange-600 mb-1">캐비티</p>
+              <p className="text-sm font-bold text-orange-800">{moldData.specifications.cavities}개</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 금형수리 진행현황 - 한 줄 */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
+                <Wrench className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">금형수리 진행현황</h3>
+            </div>
+            <button
+              onClick={() => navigate(`/worker/mold/${moldId}/repair-progress`)}
+              className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 text-sm font-medium"
+            >
+              상세보기
+            </button>
+          </div>
+          <div className="relative">
+            {/* 진행 바 배경 */}
+            <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full"></div>
+            
+            {/* 단계 */}
+            <div className="relative flex justify-between">
+              {/* 1단계: 요청접수 */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="w-10 h-10 rounded-full bg-orange-500 border-4 border-white flex items-center justify-center shadow-lg z-10">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-xs font-bold text-orange-600 mt-2">요청접수</p>
+              </div>
+
+              {/* 2단계: 작업배정 */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="w-10 h-10 rounded-full bg-blue-500 border-4 border-white flex items-center justify-center shadow-lg z-10">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-xs font-bold text-blue-600 mt-2">작업배정</p>
+              </div>
+
+              {/* 3단계: 수리진행 */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="w-10 h-10 rounded-full bg-gray-300 border-4 border-white flex items-center justify-center shadow-lg z-10">
+                  <Wrench className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-xs font-bold text-gray-600 mt-2">수리진행</p>
+              </div>
+
+              {/* 4단계: 검수완료 */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="w-10 h-10 rounded-full bg-gray-300 border-4 border-white flex items-center justify-center shadow-lg z-10">
+                  <span className="text-white font-bold text-sm">4</span>
+                </div>
+                <p className="text-xs font-bold text-gray-600 mt-2">검수완료</p>
+              </div>
+
+              {/* 5단계: 최종승인 */}
+              <div className="flex flex-col items-center flex-1">
+                <div className="w-10 h-10 rounded-full bg-gray-300 border-4 border-white flex items-center justify-center shadow-lg z-10">
+                  <span className="text-white font-bold text-sm">5</span>
+                </div>
+                <p className="text-xs font-bold text-gray-600 mt-2">최종승인</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 기존 사이드바 섹션 모두 삭제 */}
+        <div className="hidden">
+          {/* 삭제된 섹션들 */}
           <div className="lg:col-span-1 space-y-4">
             <div className="lg:sticky lg:top-24 space-y-4">
-              {/* 알림 섹션 */}
-              {notifications.length > 0 && (
+              {false && notifications.length > 0 && (
                 <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg relative">
@@ -1612,818 +1752,8 @@ const MoldInfo: React.FC = () => {
 
             </div>
           </div>
-
-          {/* Right Column - Info */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* 점검일정 & 위치정보 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* 점검 일정 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
-                    <Calendar className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">점검 일정</h3>
-                </div>
-                <div className="space-y-2">
-                  <div className="p-2.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                    <p className="text-xs font-semibold text-green-800 mb-1">최근 점검</p>
-                    <p className="text-sm font-bold text-green-700">{formatDate(moldData.lastMaintenance)}</p>
-                  </div>
-                  <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                    <p className="text-xs font-semibold text-blue-800 mb-1">다음 점검</p>
-                    <p className="text-sm font-bold text-blue-700">{formatDate(moldData.nextMaintenance)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 위치 정보 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg">
-                    <MapPin className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">위치 정보</h3>
-                </div>
-                <div className="space-y-2">
-                  <div className="p-2.5 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200">
-                    <p className="text-xs font-semibold text-slate-600 mb-1">설치 위치</p>
-                    <p className="text-sm font-bold text-slate-800">{moldData.location}</p>
-                  </div>
-                  <div className="p-2.5 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200">
-                    <p className="text-xs font-semibold text-slate-600 mb-1">담당자</p>
-                    <p className="text-sm font-bold text-slate-800">{moldData.manager}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 기술 사양 */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
-                  <Settings className="h-4 w-4 text-white" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">기술 사양</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
-                  <p className="text-xs font-semibold text-blue-600 mb-1">재질</p>
-                  <p className="text-sm font-bold text-blue-800">{moldData.specifications.material}</p>
-                </div>
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100">
-                  <p className="text-xs font-semibold text-purple-600 mb-1">중량</p>
-                  <p className="text-sm font-bold text-purple-800">{moldData.specifications.weight}</p>
-                </div>
-                <div className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                  <p className="text-xs font-semibold text-green-600 mb-1">치수</p>
-                  <p className="text-sm font-bold text-green-800">{moldData.specifications.dimensions}</p>
-                </div>
-                <div className="p-3 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border border-orange-100">
-                  <p className="text-xs font-semibold text-orange-600 mb-1">캐비티</p>
-                  <p className="text-sm font-bold text-orange-800">{moldData.specifications.cavities}개</p>
-                </div>
-              </div>
-            </div>
-
-            {/* 리포트 및 분석 */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
-                  <FileBarChart className="h-4 w-4 text-white" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">리포트 및 분석</h3>
-              </div>
-              <div className="space-y-2">
-                {/* 월간 리포트 */}
-                <button 
-                  onClick={() => setReportView('monthly')}
-                  className="w-full p-3 bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 rounded-xl border border-violet-200 transition-all duration-200 text-left group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
-                        <FileBarChart className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">월간 리포트</p>
-                        <p className="text-xs text-slate-600">종합 운영 현황</p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-violet-600 group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </button>
-
-                {/* 성능 분석 */}
-                <button 
-                  onClick={() => setReportView('performance')}
-                  className="w-full p-3 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-xl border border-blue-200 transition-all duration-200 text-left group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                        <PieChart className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">성능 분석</p>
-                        <p className="text-xs text-slate-600">효율성 및 품질 지표</p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-blue-600 group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </button>
-
-                {/* 활동 내역 */}
-                <button 
-                  onClick={() => setReportView('activity')}
-                  className="w-full p-3 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-xl border border-amber-200 transition-all duration-200 text-left group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
-                        <Zap className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">활동 내역</p>
-                        <p className="text-xs text-slate-600">작업 로그 및 이벤트</p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-amber-600 group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* 작업 이력 */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
-                  <Activity className="h-4 w-4 text-white" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">작업 이력</h3>
-              </div>
-              <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
-                {moldData.maintenanceHistory.map((history, index) => (
-                  <div key={index} className="relative pl-6">
-                    <div className="absolute left-0 top-2 w-3 h-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full border-2 border-white shadow-lg"></div>
-                    {index < moldData.maintenanceHistory.length - 1 && (
-                      <div className="absolute left-1.5 top-5 w-0.5 h-10 bg-gradient-to-b from-blue-200 to-transparent"></div>
-                    )}
-                    <div className="bg-gradient-to-r from-slate-50 to-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                      <p className="font-semibold text-slate-900 mb-2 text-sm">{history.description}</p>
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">{history.type}</span>
-                        <span className="px-2.5 py-1 bg-green-100 text-green-800 rounded-full font-medium">{history.technician}</span>
-                        <span className="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full font-medium">{formatDate(history.date)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 압력 모니터링 미니 차트 */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg">
-                  <TrendingUp className="h-4 w-4 text-white" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">압력 모니터링</h3>
-              </div>
-              <div className="h-48">
-                <Line
-                  data={{
-                    labels: ['1h', '2h', '3h', '4h', '5h', '6h'],
-                    datasets: [
-                      {
-                        label: '사출 압력 (MPa)',
-                        data: [78, 80, 79, 81, 80, 79],
-                        borderColor: 'rgb(249, 115, 22)',
-                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                      }
-                    ]
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 10,
-                        titleFont: { size: 12 },
-                        bodyFont: { size: 11 }
-                      }
-                    },
-                    scales: {
-                      y: {
-                        min: 75,
-                        max: 85,
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                        ticks: { font: { size: 10 } }
-                      },
-                      x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 9 } }
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* 수리 빈도 분석 */}
-            <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg">
-                  <Wrench className="h-4 w-4 text-white" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">수리 빈도</h3>
-              </div>
-              <div className="h-48">
-                <Bar
-                  data={{
-                    labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-                    datasets: [
-                      {
-                        label: '수리 횟수',
-                        data: [2, 1, 3, 1, 2, 1],
-                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                        borderColor: 'rgb(239, 68, 68)',
-                        borderWidth: 1
-                      }
-                    ]
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false },
-                      tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 10,
-                        titleFont: { size: 12 },
-                        bodyFont: { size: 11 }
-                      }
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        max: 5,
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                        ticks: { stepSize: 1, font: { size: 10 } }
-                      },
-                      x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 9 } }
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
         </div>
-
-        {/* 시각화 그래프 섹션 - 전체 너비 */}
-        <div className="max-w-7xl mx-auto px-4 md:px-6 pb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* 샷수 추이 그래프 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
-                    <TrendingUp className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">샷수 추이</h3>
-                </div>
-                <div className="h-64">
-                  <Line
-                    data={{
-                      labels: ['1주전', '6일전', '5일전', '4일전', '3일전', '2일전', '어제', '오늘'],
-                      datasets: [
-                        {
-                          label: '일일 샷수',
-                          data: [450, 480, 520, 490, 510, 530, 500, 520],
-                          borderColor: 'rgb(147, 51, 234)',
-                          backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                          fill: true,
-                          tension: 0.4
-                        }
-                      ]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: false
-                        },
-                        tooltip: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          padding: 12,
-                          titleFont: { size: 13 },
-                          bodyFont: { size: 12 }
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                          },
-                          ticks: {
-                            font: { size: 11 }
-                          }
-                        },
-                        x: {
-                          grid: {
-                            display: false
-                          },
-                          ticks: {
-                            font: { size: 10 }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 점검 및 수리 통계 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                    <BarChart3 className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">월간 작업 통계</h3>
-                </div>
-                <div className="h-64">
-                  <Bar
-                    data={{
-                      labels: ['1주차', '2주차', '3주차', '4주차'],
-                      datasets: [
-                        {
-                          label: '일상점검',
-                          data: [7, 7, 6, 5],
-                          backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                          borderColor: 'rgb(59, 130, 246)',
-                          borderWidth: 1
-                        },
-                        {
-                          label: '수리요청',
-                          data: [1, 2, 0, 1],
-                          backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                          borderColor: 'rgb(239, 68, 68)',
-                          borderWidth: 1
-                        }
-                      ]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'top',
-                          labels: {
-                            font: { size: 11 },
-                            padding: 10,
-                            usePointStyle: true
-                          }
-                        },
-                        tooltip: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          padding: 12,
-                          titleFont: { size: 13 },
-                          bodyFont: { size: 12 }
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                          },
-                          ticks: {
-                            stepSize: 1,
-                            font: { size: 11 }
-                          }
-                        },
-                        x: {
-                          grid: {
-                            display: false
-                          },
-                          ticks: {
-                            font: { size: 10 }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 온도 모니터링 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg">
-                    <TrendingDown className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">온도 변화</h3>
-                </div>
-                <div className="h-64">
-                  <Line
-                    data={{
-                      labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-                      datasets: [
-                        {
-                          label: '금형 온도 (°C)',
-                          data: [218, 220, 222, 221, 220, 219, 218],
-                          borderColor: 'rgb(239, 68, 68)',
-                          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                          fill: true,
-                          tension: 0.4
-                        },
-                        {
-                          label: '설정 온도',
-                          data: [220, 220, 220, 220, 220, 220, 220],
-                          borderColor: 'rgb(156, 163, 175)',
-                          backgroundColor: 'transparent',
-                          borderDash: [5, 5],
-                          tension: 0
-                        }
-                      ]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'top',
-                          labels: {
-                            font: { size: 11 },
-                            padding: 10,
-                            usePointStyle: true
-                          }
-                        },
-                        tooltip: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          padding: 12,
-                          titleFont: { size: 13 },
-                          bodyFont: { size: 12 }
-                        }
-                      },
-                      scales: {
-                        y: {
-                          min: 215,
-                          max: 225,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                          },
-                          ticks: {
-                            font: { size: 11 }
-                          }
-                        },
-                        x: {
-                          grid: {
-                            display: false
-                          },
-                          ticks: {
-                            font: { size: 10 }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 가동률 분석 */}
-              <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
-                    <Activity className="h-4 w-4 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900">주간 가동률</h3>
-                </div>
-                <div className="h-64">
-                  <Bar
-                    data={{
-                      labels: ['월', '화', '수', '목', '금', '토', '일'],
-                      datasets: [
-                        {
-                          label: '가동률 (%)',
-                          data: [95, 92, 98, 94, 96, 88, 85],
-                          backgroundColor: [
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(251, 191, 36, 0.8)',
-                            'rgba(251, 191, 36, 0.8)'
-                          ],
-                          borderColor: [
-                            'rgb(34, 197, 94)',
-                            'rgb(34, 197, 94)',
-                            'rgb(34, 197, 94)',
-                            'rgb(34, 197, 94)',
-                            'rgb(34, 197, 94)',
-                            'rgb(251, 191, 36)',
-                            'rgb(251, 191, 36)'
-                          ],
-                          borderWidth: 1
-                        }
-                      ]
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: false
-                        },
-                        tooltip: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          padding: 12,
-                          titleFont: { size: 13 },
-                          bodyFont: { size: 12 },
-                          callbacks: {
-                            label: (context) => `가동률: ${context.parsed.y}%`
-                          }
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          max: 100,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                          },
-                          ticks: {
-                            callback: (value) => `${value}%`,
-                            font: { size: 11 }
-                          }
-                        },
-                        x: {
-                          grid: {
-                            display: false
-                          },
-                          ticks: {
-                            font: { size: 10 }
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      {/* 리포트 모달 */}
-      {reportView && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden">
-            {/* 모달 헤더 */}
-            <div className="bg-gradient-to-r from-slate-50 to-white p-4 border-b border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {reportView === 'monthly' && (
-                  <>
-                    <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
-                      <FileBarChart className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900">월간 리포트</h3>
-                  </>
-                )}
-                {reportView === 'performance' && (
-                  <>
-                    <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                      <PieChart className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900">성능 분석</h3>
-                  </>
-                )}
-                {reportView === 'activity' && (
-                  <>
-                    <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
-                      <Zap className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900">활동 내역</h3>
-                  </>
-                )}
-              </div>
-              <button
-                onClick={() => setReportView(null)}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5 text-slate-600" />
-              </button>
-            </div>
-
-            {/* 모달 콘텐츠 */}
-            <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
-              {/* 월간 리포트 */}
-              {reportView === 'monthly' && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* 총 가동 시간 */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                      <p className="text-sm font-semibold text-blue-800 mb-2">총 가동 시간</p>
-                      <p className="text-3xl font-bold text-blue-900">520h</p>
-                      <p className="text-xs text-blue-600 mt-1">전월 대비 +5%</p>
-                    </div>
-                    {/* 총 생산량 */}
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                      <p className="text-sm font-semibold text-green-800 mb-2">총 생산량</p>
-                      <p className="text-3xl font-bold text-green-900">15,200</p>
-                      <p className="text-xs text-green-600 mt-1">전월 대비 +8%</p>
-                    </div>
-                    {/* 평균 가동률 */}
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-                      <p className="text-sm font-semibold text-purple-800 mb-2">평균 가동률</p>
-                      <p className="text-3xl font-bold text-purple-900">93%</p>
-                      <p className="text-xs text-purple-600 mt-1">전월 대비 +2%</p>
-                    </div>
-                  </div>
-
-                  {/* 주간별 생산량 차트 */}
-                  <div className="bg-white rounded-xl p-4 border border-slate-200">
-                    <h4 className="text-sm font-bold text-slate-900 mb-3">주간별 생산량</h4>
-                    <div className="h-64">
-                      <Bar
-                        data={{
-                          labels: ['1주차', '2주차', '3주차', '4주차'],
-                          datasets: [{
-                            label: '생산량',
-                            data: [3800, 3900, 3700, 3800],
-                            backgroundColor: 'rgba(139, 92, 246, 0.7)',
-                            borderColor: 'rgb(139, 92, 246)',
-                            borderWidth: 1
-                          }]
-                        }}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          plugins: {
-                            legend: { display: false }
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 점검 및 수리 현황 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-xl p-4 border border-slate-200">
-                      <h4 className="text-sm font-bold text-slate-900 mb-3">점검 현황</h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">일상점검</span>
-                          <span className="text-sm font-bold text-blue-700">25회</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">정기점검</span>
-                          <span className="text-sm font-bold text-green-700">4회</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 border border-slate-200">
-                      <h4 className="text-sm font-bold text-slate-900 mb-3">수리 현황</h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">수리 요청</span>
-                          <span className="text-sm font-bold text-orange-700">4회</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-slate-600">완료</span>
-                          <span className="text-sm font-bold text-green-700">3회</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 성능 분석 */}
-              {reportView === 'performance' && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* 가동률 추이 */}
-                    <div className="bg-white rounded-xl p-4 border border-slate-200">
-                      <h4 className="text-sm font-bold text-slate-900 mb-3">가동률 추이</h4>
-                      <div className="h-48">
-                        <Line
-                          data={{
-                            labels: ['1주', '2주', '3주', '4주'],
-                            datasets: [{
-                              label: '가동률 (%)',
-                              data: [92, 94, 91, 93],
-                              borderColor: 'rgb(59, 130, 246)',
-                              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                              fill: true,
-                              tension: 0.4
-                            }]
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 불량률 분석 */}
-                    <div className="bg-white rounded-xl p-4 border border-slate-200">
-                      <h4 className="text-sm font-bold text-slate-900 mb-3">불량률</h4>
-                      <div className="flex items-center justify-center h-48">
-                        <div className="text-center">
-                          <p className="text-5xl font-bold text-green-600">0.8%</p>
-                          <p className="text-sm text-slate-600 mt-2">목표: 1.0% 이하</p>
-                          <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold">
-                            목표 달성
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 효율성 지표 */}
-                  <div className="bg-white rounded-xl p-4 border border-slate-200">
-                    <h4 className="text-sm font-bold text-slate-900 mb-3">효율성 지표</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">사이클 타임 준수율</span>
-                          <span className="text-sm font-bold text-blue-700">96%</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: '96%' }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">에너지 효율</span>
-                          <span className="text-sm font-bold text-green-700">89%</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="bg-green-500 h-2 rounded-full" style={{ width: '89%' }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">자재 활용률</span>
-                          <span className="text-sm font-bold text-purple-700">94%</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div className="bg-purple-500 h-2 rounded-full" style={{ width: '94%' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 활동 내역 */}
-              {reportView === 'activity' && (
-                <div className="space-y-4">
-                  {[
-                    { time: '2024-11-05 14:30', user: '김작업', action: '타수 기록 업데이트', detail: '45,000 → 45,500 (+500)', type: 'shot' },
-                    { time: '2024-11-05 09:15', user: '이작업', action: '일상점검 완료', detail: '외관 점검, 작동 확인, 청소 완료', type: 'check' },
-                    { time: '2024-11-04 16:20', user: '박작업', action: '수리 요청', detail: '냉각수 누수 발견', type: 'repair' },
-                    { time: '2024-11-04 08:45', user: '김작업', action: '일상점검 완료', detail: '정상 작동 확인', type: 'check' },
-                    { time: '2024-11-03 15:10', user: '최작업', action: '타수 기록 업데이트', detail: '44,500 → 45,000 (+500)', type: 'shot' },
-                    { time: '2024-11-03 10:30', user: '이작업', action: '수리 완료', detail: '사출 압력 조정 완료', type: 'repair' }
-                  ].map((activity, index) => (
-                    <div key={index} className={`p-4 rounded-xl border ${
-                      activity.type === 'shot' ? 'bg-green-50 border-green-200' :
-                      activity.type === 'check' ? 'bg-blue-50 border-blue-200' :
-                      'bg-orange-50 border-orange-200'
-                    }`}>
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {activity.type === 'shot' && <Activity className="h-4 w-4 text-green-600" />}
-                          {activity.type === 'check' && <CheckCircle className="h-4 w-4 text-blue-600" />}
-                          {activity.type === 'repair' && <Wrench className="h-4 w-4 text-orange-600" />}
-                          <span className="text-sm font-bold text-slate-900">{activity.action}</span>
-                        </div>
-                        <span className="text-xs text-slate-500">{activity.time}</span>
-                      </div>
-                      <p className="text-sm text-slate-700 mb-1">{activity.detail}</p>
-                      <p className="text-xs text-slate-500">작업자: {activity.user}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* 이력 조회 모달 */}
       {historyView && (

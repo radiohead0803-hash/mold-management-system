@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Wrench, Clock, CheckCircle, AlertTriangle, Calendar } from 'lucide-react';
+import { ArrowLeft, Wrench, Clock, CheckCircle, AlertTriangle, Calendar, User } from 'lucide-react';
 
 interface MoldBasicInfo {
   moldId: string;
@@ -19,6 +19,7 @@ interface RepairProgress {
   progress: number;
   technician?: string;
   notes?: string;
+  currentStep: number; // 1: 요청접수, 2: 작업배정, 3: 수리진행, 4: 검수완료, 5: 최종승인
 }
 
 const RepairProgress: React.FC = () => {
@@ -64,7 +65,8 @@ const RepairProgress: React.FC = () => {
           status: 'in_progress',
           progress: 60,
           technician: '김기술',
-          notes: '부품 발주 완료, 작업 진행 중'
+          notes: '부품 발주 완료, 작업 진행 중',
+          currentStep: 3
         },
         {
           id: 2,
@@ -75,7 +77,8 @@ const RepairProgress: React.FC = () => {
           priority: 'medium',
           status: 'pending',
           progress: 0,
-          notes: '일정 조율 중'
+          notes: '일정 조율 중',
+          currentStep: 1
         },
         {
           id: 3,
@@ -87,7 +90,8 @@ const RepairProgress: React.FC = () => {
           status: 'completed',
           progress: 100,
           technician: '이수리',
-          notes: '작업 완료'
+          notes: '작업 완료',
+          currentStep: 5
         }
       ];
       setRepairs(repairsData);
@@ -206,62 +210,168 @@ const RepairProgress: React.FC = () => {
           </div>
         </div>
 
-        {/* 진행현황 카드 */}
-        <div className="space-y-4">
+        {/* 진행현황 카드 - 워크플로우 형태 */}
+        <div className="space-y-6">
           {repairs.map((repair) => (
-            <div key={repair.id} className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-bold text-slate-900">{repair.type}</h3>
+            <div key={repair.id} className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+              {/* 헤더 */}
+              <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Wrench className="h-5 w-5 text-white" />
+                    <h3 className="text-lg font-bold text-white">{repair.type}</h3>
                     {getPriorityBadge(repair.priority)}
+                  </div>
+                  <div className="flex items-center gap-2">
                     {getStatusBadge(repair.status)}
                   </div>
-                  <p className="text-sm text-slate-600 mb-3">{repair.description}</p>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-500 mb-1">요청일</p>
-                      <p className="font-semibold text-slate-900 flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {repair.requestDate}
-                      </p>
+                </div>
+                <p className="text-sm text-slate-300 mt-2">{repair.description}</p>
+              </div>
+
+              <div className="p-6">
+                {/* 워크플로우 단계 */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between relative">
+                    {/* 연결 라인 */}
+                    <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200 z-0"></div>
+                    <div 
+                      className="absolute top-5 left-0 h-1 bg-blue-500 z-0 transition-all duration-500"
+                      style={{ width: `${(repair.currentStep - 1) * 25}%` }}
+                    ></div>
+
+                    {/* 단계 1: 요청접수 */}
+                    <div className="flex flex-col items-center z-10 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        repair.currentStep >= 1 
+                          ? 'bg-blue-500 border-blue-500 text-white' 
+                          : 'bg-white border-slate-300 text-slate-400'
+                      }`}>
+                        {repair.currentStep > 1 ? <CheckCircle className="h-5 w-5" /> : '1'}
+                      </div>
+                      <p className={`text-xs mt-2 font-medium ${
+                        repair.currentStep >= 1 ? 'text-blue-600' : 'text-slate-400'
+                      }`}>요청접수</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500 mb-1">완료예정일</p>
-                      <p className="font-semibold text-slate-900 flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {repair.expectedDate}
-                      </p>
+
+                    {/* 단계 2: 작업배정 */}
+                    <div className="flex flex-col items-center z-10 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        repair.currentStep >= 2 
+                          ? 'bg-blue-500 border-blue-500 text-white' 
+                          : 'bg-white border-slate-300 text-slate-400'
+                      }`}>
+                        {repair.currentStep > 2 ? <CheckCircle className="h-5 w-5" /> : repair.currentStep === 2 ? <User className="h-5 w-5" /> : '2'}
+                      </div>
+                      <p className={`text-xs mt-2 font-medium ${
+                        repair.currentStep >= 2 ? 'text-blue-600' : 'text-slate-400'
+                      }`}>작업배정</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500 mb-1">담당자</p>
-                      <p className="font-semibold text-slate-900">{repair.technician || '-'}</p>
+
+                    {/* 단계 3: 수리진행 */}
+                    <div className="flex flex-col items-center z-10 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        repair.currentStep >= 3 
+                          ? 'bg-blue-500 border-blue-500 text-white' 
+                          : 'bg-white border-slate-300 text-slate-400'
+                      }`}>
+                        {repair.currentStep > 3 ? <CheckCircle className="h-5 w-5" /> : repair.currentStep === 3 ? <Wrench className="h-5 w-5" /> : '3'}
+                      </div>
+                      <p className={`text-xs mt-2 font-medium ${
+                        repair.currentStep >= 3 ? 'text-blue-600' : 'text-slate-400'
+                      }`}>수리진행</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500 mb-1">진행률</p>
-                      <p className="font-semibold text-blue-600">{repair.progress}%</p>
+
+                    {/* 단계 4: 검수완료 */}
+                    <div className="flex flex-col items-center z-10 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        repair.currentStep >= 4 
+                          ? 'bg-blue-500 border-blue-500 text-white' 
+                          : 'bg-white border-slate-300 text-slate-400'
+                      }`}>
+                        {repair.currentStep > 4 ? <CheckCircle className="h-5 w-5" /> : repair.currentStep === 4 ? <AlertTriangle className="h-5 w-5" /> : '4'}
+                      </div>
+                      <p className={`text-xs mt-2 font-medium ${
+                        repair.currentStep >= 4 ? 'text-blue-600' : 'text-slate-400'
+                      }`}>검수완료</p>
+                    </div>
+
+                    {/* 단계 5: 최종승인 */}
+                    <div className="flex flex-col items-center z-10 flex-1">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        repair.currentStep >= 5 
+                          ? 'bg-green-500 border-green-500 text-white' 
+                          : 'bg-white border-slate-300 text-slate-400'
+                      }`}>
+                        {repair.currentStep >= 5 ? <CheckCircle className="h-5 w-5" /> : '5'}
+                      </div>
+                      <p className={`text-xs mt-2 font-medium ${
+                        repair.currentStep >= 5 ? 'text-green-600' : 'text-slate-400'
+                      }`}>최종승인</p>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Progress Bar */}
-              <div className="mb-3">
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${repair.progress}%` }}
-                  ></div>
+                {/* 상세 정보 */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500 mb-1">요청일</p>
+                    <p className="font-semibold text-slate-900 flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {repair.requestDate}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500 mb-1">완료예정일</p>
+                    <p className="font-semibold text-slate-900 flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {repair.expectedDate}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500 mb-1">담당자</p>
+                    <p className="font-semibold text-slate-900 flex items-center gap-1">
+                      <User className="h-4 w-4" />
+                      {repair.technician || '미배정'}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <p className="text-xs text-slate-500 mb-1">진행률</p>
+                    <p className="font-semibold text-blue-600 text-lg">{repair.progress}%</p>
+                  </div>
                 </div>
-              </div>
 
-              {repair.notes && (
-                <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                  <p className="text-xs text-slate-500 mb-1">비고</p>
-                  <p className="text-sm text-slate-700">{repair.notes}</p>
+                {/* Progress Bar */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-slate-600 mb-1">
+                    <span>진행 상태</span>
+                    <span>{repair.progress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-3">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-300 flex items-center justify-end pr-1"
+                      style={{ width: `${repair.progress}%` }}
+                    >
+                      {repair.progress > 10 && (
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                {/* 비고 */}
+                {repair.notes && (
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-blue-900 mb-1">현재 상태</p>
+                        <p className="text-sm text-blue-800">{repair.notes}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

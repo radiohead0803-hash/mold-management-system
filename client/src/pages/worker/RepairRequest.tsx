@@ -7,8 +7,8 @@ import {
   Camera,
   MapPin,
   Save,
-  Upload,
-  X
+  X,
+  Printer
 } from 'lucide-react';
 
 interface MoldBasicInfo {
@@ -161,20 +161,6 @@ const RepairRequest: React.FC = () => {
     }));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setRequestData(prev => ({
-      ...prev,
-      images: [...prev.images, ...files]
-    }));
-  };
-
-  const removeImage = (index: number) => {
-    setRequestData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleStep2PhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -202,6 +188,10 @@ const RepairRequest: React.FC = () => {
       issueType: '이젝터 문제',
       description: '이젝터 핀이 제대로 작동하지 않습니다. 제품이 금형에서 분리되지 않아 생산이 중단되었습니다. 긴급 수리가 필요합니다.'
     }));
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleSubmit = async () => {
@@ -269,34 +259,57 @@ const RepairRequest: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <>
+      <style>{`
+        @media print {
+          body { margin: 0; padding: 20px; }
+          @page { size: A4; margin: 15mm; }
+          .print\:hidden { display: none !important; }
+          .bg-gradient-to-br { background: white !important; }
+          .bg-gradient-to-r { background: white !important; }
+          .shadow-md, .shadow-lg { box-shadow: none !important; }
+          .sticky { position: relative !important; }
+          button { display: none !important; }
+          .border-dashed { border-style: solid !important; }
+        }
+      `}</style>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
-        <div className="px-4 py-3">
+      <div className="bg-white shadow-md sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 text-neutral-500 hover:text-neutral-700"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="text-center">
-              <h1 className="text-lg font-semibold text-neutral-900">수리 요청</h1>
-              <p className="text-sm text-neutral-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 hover:bg-slate-100 rounded-lg"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold">금형수리 요청</h1>
+                <p className="text-sm text-slate-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
+              </div>
             </div>
             <div className="flex gap-2">
               <button
+                onClick={handlePrint}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium flex items-center gap-2 print:hidden"
+              >
+                <Printer className="h-4 w-4" />
+                보고서 출력
+              </button>
+              <button
                 onClick={fillTestData}
-                className="btn-secondary text-sm"
+                className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-medium print:hidden"
               >
                 테스트 데이터
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 font-medium flex items-center gap-2 disabled:opacity-50 print:hidden"
               >
-                <Save className="mr-2 h-4 w-4" />
+                <Save className="h-4 w-4" />
                 {submitting ? '전송 중...' : '요청 전송'}
               </button>
             </div>
@@ -304,7 +317,16 @@ const RepairRequest: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-4 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* 수리 요청 */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 px-6 py-3 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-white">□</span> 금형수리 요청
+            </h2>
+            <span className="text-white text-xs">Creative Auto Module System</span>
+          </div>
+          <div className="p-6 bg-slate-50 space-y-6">
         {/* 금형 정보 */}
         {moldInfo && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -1241,57 +1263,11 @@ const RepairRequest: React.FC = () => {
           )}
         </div>
 
-        {/* 사진 첨부 */}
-        <div className="bg-white rounded-lg border p-4">
-          <h4 className="text-lg font-medium text-neutral-900 mb-4 flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            문제 사진
-          </h4>
-          
-          <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center">
-            <Upload className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
-            <p className="text-neutral-600 mb-2">문제 상황을 보여주는 사진을 업로드하세요</p>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              id="image-upload"
-            />
-            <label
-              htmlFor="image-upload"
-              className="btn-primary cursor-pointer"
-            >
-              파일 선택
-            </label>
           </div>
-          
-          {requestData.images.length > 0 && (
-            <div className="mt-4">
-              <h5 className="text-sm font-medium text-neutral-700 mb-2">업로드된 이미지</h5>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {requestData.images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={URL.createObjectURL(image)}
-                      alt={`문제 사진 ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
-                    />
-                    <button
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
+    </>
   );
 };
 

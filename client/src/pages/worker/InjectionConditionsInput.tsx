@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Save, Info } from 'lucide-react';
+import { ArrowLeft, Save, Info } from 'lucide-react';
 
 interface MoldBasicInfo {
   moldId: string;
@@ -115,51 +115,55 @@ const InjectionConditionsInput: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      <div className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(`/worker/mold/${moldId}`)}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-lg"
               >
-                <ArrowLeft className="h-5 w-5 text-slate-600" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center">
-                  <Thermometer className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-slate-900">{moldInfo?.moldId} - 사출조건 입력</h1>
-                  <p className="text-sm text-slate-600">{moldInfo?.name}</p>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold">사출조건 입력</h1>
+                <p className="text-sm text-slate-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* 안내 메시지 */}
-        <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-orange-600 mt-0.5" />
-            <div>
-              <h4 className="font-bold text-orange-900 mb-1">사출조건 입력 안내</h4>
-              <p className="text-sm text-orange-800">새로운 사출조건을 입력하면 리비전이 자동으로 생성되며, 변경이력이 기록됩니다.</p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* 사출조건 입력 */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 px-6 py-3 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-white">□</span> 사출조건 입력
+            </h2>
+            <span className="text-white text-xs">Creative Auto Module System</span>
           </div>
-        </div>
 
-        {/* 온도 설정 */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 to-orange-600 px-6 py-3">
-            <h2 className="text-base font-bold text-white">🌡️ 온도 설정</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 안내 메시지 */}
+          <div className="p-6 bg-slate-50">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-blue-900 mb-1">사출조건 입력 안내</h4>
+                  <p className="text-sm text-blue-800">새로운 사출조건을 입력하면 리비전이 자동으로 생성되며, 변경이력이 기록됩니다.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 온도 설정 */}
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 온도 설정
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">노즐 온도 (°C) *</label>
                 <input
@@ -167,7 +171,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.temperature1}
                   onChange={(e) => handleChange('temperature1', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="예: 220"
+                  placeholder="기존: 225°C"
                 />
               </div>
               <div>
@@ -177,7 +181,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.temperature2}
                   onChange={(e) => handleChange('temperature2', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="예: 210"
+                  placeholder="기존: 210°C"
                 />
               </div>
               <div>
@@ -187,7 +191,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.temperature3}
                   onChange={(e) => handleChange('temperature3', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="예: 200"
+                  placeholder="기존: 200°C"
                 />
               </div>
               <div>
@@ -197,7 +201,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.temperature4}
                   onChange={(e) => handleChange('temperature4', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="예: 190"
+                  placeholder="기존: 190°C"
                 />
               </div>
               <div>
@@ -207,20 +211,18 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.moldTemperature}
                   onChange={(e) => handleChange('moldTemperature', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  placeholder="예: 40"
+                  placeholder="기존: 40°C"
                 />
               </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* 압력 및 속도 설정 */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-600 px-6 py-3">
-            <h2 className="text-base font-bold text-white">⚡ 압력 및 속도 설정</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 압력 및 속도 설정 */}
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 압력 및 속도 설정
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">사출압력 (MPa) *</label>
                 <input
@@ -228,7 +230,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.injectionPressure}
                   onChange={(e) => handleChange('injectionPressure', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="예: 80"
+                  placeholder="기존: 85 MPa"
                 />
               </div>
               <div>
@@ -238,7 +240,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.injectionSpeed}
                   onChange={(e) => handleChange('injectionSpeed', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="예: 50"
+                  placeholder="기존: 50 mm/s"
                 />
               </div>
               <div>
@@ -248,7 +250,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.holdingPressure}
                   onChange={(e) => handleChange('holdingPressure', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="예: 60"
+                  placeholder="기존: 60 MPa"
                 />
               </div>
               <div>
@@ -258,7 +260,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.backPressure}
                   onChange={(e) => handleChange('backPressure', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="예: 5"
+                  placeholder="기존: 5 MPa"
                 />
               </div>
               <div>
@@ -268,20 +270,18 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.screwSpeed}
                   onChange={(e) => handleChange('screwSpeed', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="예: 100"
+                  placeholder="기존: 100 rpm"
                 />
               </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* 시간 설정 */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-3">
-            <h2 className="text-base font-bold text-white">⏱️ 시간 설정</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 시간 설정 */}
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 시간 설정
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">보압시간 (초)</label>
                 <input
@@ -289,7 +289,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.holdingTime}
                   onChange={(e) => handleChange('holdingTime', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="예: 3"
+                  placeholder="기존: 3초"
                 />
               </div>
               <div>
@@ -299,7 +299,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.coolingTime}
                   onChange={(e) => handleChange('coolingTime', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="예: 15"
+                  placeholder="기존: 15초"
                 />
               </div>
               <div>
@@ -309,7 +309,7 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.cycleTime}
                   onChange={(e) => handleChange('cycleTime', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="예: 25"
+                  placeholder="기존: 25초"
                 />
               </div>
               <div>
@@ -319,27 +319,30 @@ const InjectionConditionsInput: React.FC = () => {
                   value={conditions.cushion}
                   onChange={(e) => handleChange('cushion', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="예: 5"
+                  placeholder="기존: 5 mm"
                 />
               </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* 비고 */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
-          <label className="block text-sm font-medium text-slate-700 mb-2">비고</label>
-          <textarea
+            {/* 비고 */}
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 비고
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6">
+              <textarea
             value={conditions.notes}
             onChange={(e) => handleChange('notes', e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             rows={4}
             placeholder="특이사항이나 변경 사유를 입력하세요..."
-          />
+              />
+            </div>
+          </div>
         </div>
 
         {/* 제출 버튼 */}
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={() => navigate(`/worker/mold/${moldId}`)}
             className="px-6 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors font-semibold"

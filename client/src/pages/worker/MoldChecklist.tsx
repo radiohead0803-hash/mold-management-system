@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, CheckCircle, Upload, AlertCircle } from 'lucide-react';
-
-interface CheckItem {
-  id: string;
-  item: string;
-  spec?: string;
-  specType?: 'checkbox' | 'radio' | 'input' | 'text';
-  specOptions?: string[];
-  specValue?: string;
-  checked: boolean;
-}
+import { ArrowLeft, Save, CheckCircle, Upload, AlertCircle, Paperclip, X, Download, Eye } from 'lucide-react';
+import { allCategories, CategorySection, CheckItem, FileAttachment } from './MoldChecklistData';
 
 const MoldChecklist: React.FC = () => {
   const { moldId } = useParams();
@@ -20,7 +11,7 @@ const MoldChecklist: React.FC = () => {
   const [productImage, setProductImage] = useState('');
   const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved'>('pending');
   
-  // 금형제작처에서 입력 가능한 항목들
+  // 기본 정보
   const [vehicleModel, setVehicleModel] = useState('NO5 (기본차)');
   const [manufacturer, setManufacturer] = useState('지금강');
   const [supplier, setSupplier] = useState('아이에이테크');
@@ -29,77 +20,34 @@ const MoldChecklist: React.FC = () => {
   const [eoCutDate, setEoCutDate] = useState('2020.09.08');
   const [initialToDate, setInitialToDate] = useState('2020.11.20');
 
-  // 검증 내용
-  const [verificationItems, setVerificationItems] = useState<CheckItem[]>([
-    { id: 'v1', item: '금형 번호 중복, 금형 아이템 번호 중복 확인', specType: 'checkbox', specOptions: ['완전', '미완전'], specValue: '완전', checked: false },
-    { id: 'v2', item: '양산처 금형 제작 사양서 반영', specType: 'checkbox', specOptions: ['완전', '미 반영'], specValue: '완전', checked: false },
-    { id: 'v3', item: '수축률', specType: 'input', specValue: '8/1000', checked: false },
-    { id: 'v4', item: '금형 중량', specType: 'input', specValue: '4.9ton', checked: false },
-    { id: 'v5', item: '범퍼 어드밴싱 적용', specType: 'checkbox', specOptions: ['적용', '미 적용', '사양 삭제'], specValue: '사양 삭제', checked: false },
-    { id: 'v6', item: '캐비티 재질', specType: 'input', specValue: 'KP4', checked: false },
-    { id: 'v7', item: '코어 재질', specType: 'input', specValue: 'KP4', checked: false },
-    { id: 'v8', item: '캐비티 수', specType: 'radio', specOptions: ['1', '2', '3', '4', '5', '6'], specValue: '2', checked: false },
-    { id: 'v9', item: '게이트', specType: 'checkbox', specOptions: ['오드', '밸브'], specValue: '오드', checked: false },
-    { id: 'v10', item: '게이트 수', specType: 'radio', specOptions: ['1', '2', '3', '4', '5', '6'], specValue: '1', checked: false },
-    { id: 'v11', item: '게이트 위치 적정성', specType: 'checkbox', specOptions: ['반영', '미 반영'], specValue: '미 반영', checked: false },
-    { id: 'v12', item: '게이트 사이즈 확인', specType: 'checkbox', specOptions: ['완전', '미 확인'], specValue: '완전', checked: false },
-    { id: 'v13', item: '게이트 컷팅 형상 적정성', specType: 'checkbox', specOptions: ['캐비티', '코어', '외형'], specValue: '코어', checked: false },
-    { id: 'v14', item: '이젝트 핀', specType: 'checkbox', specOptions: ['완전', '자리', '위치', '직경'], specValue: '완전,자리,위치,직경', checked: false },
-    { id: 'v15', item: '노즐 및 게이트 금형 간인', specType: 'checkbox', specOptions: ['반영', '미 반영'], specValue: '미 반영', checked: false },
-    { id: 'v16', item: '냉각라인 위치 적정성 (제품 두께 20mm 이상 확인)', specType: 'checkbox', specOptions: ['반영', '미 반영'], specValue: '반영', checked: false },
-    { id: 'v17', item: '온도센서 반영', specType: 'checkbox', specOptions: ['반영', '미 반영'], specValue: '반영', checked: false },
-    { id: 'v18', item: '온도 센서 수(캐비티 / 코어)', specType: 'input', specValue: '1/1', checked: false }
-  ]);
+  // 카테고리 상태 관리
+  const [categories, setCategories] = useState<CategorySection[]>(
+    allCategories.map(cat => ({ ...cat, items: cat.items.map(item => ({ ...item })) }))
+  );
 
-  // 성형예상
-  const [moldingItems, setMoldingItems] = useState<CheckItem[]>([
-    { id: 'm1', item: '충 대료를 및 도금 아이템 성형 예상(충돌 예상) 실시', spec: '2020. 09 . 18 .', checked: false },
-    { id: 'm2', item: '금형 확인 (미 성형 반영본 확인)', spec: '■완전 □미 확인', checked: false },
-    { id: 'm3', item: '금형 확인 (제품 투계, 날판 구조 확인)', spec: '■완전 □미 확인', checked: false },
-    { id: 'm4', item: '웰드라인 위치 확인', spec: '□확인 ■미 확인', checked: false },
-    { id: 'm5', item: '웰드라인 구조 형상 수정', spec: '□확인 ■미 확인', checked: false },
-    { id: 'm6', item: '가스 발생 부위 확인', spec: '□확인 ■미 확인', checked: false }
-  ]);
+  // 파일 미리보기 모달
+  const [previewFile, setPreviewFile] = useState<FileAttachment | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
-  // 싱크마크
-  const [sinkMarkItems, setSinkMarkItems] = useState<CheckItem[]>([
-    { id: 's1', item: '전체 리브 0.7t 반영', spec: '■반영 □미 반영', checked: false },
-    { id: 's2', item: '싱크 발생 구조 (제품 투계 확인)', spec: '■반영 □미 반영', checked: false },
-    { id: 's3', item: '예각 부위 확인 - 제품 실물기 반영', spec: '■반영 □미 반영', checked: false }
-  ]);
+  // 총 점검 건수 계산
+  const getTotalCheckItems = () => {
+    return categories.reduce((total, category) => {
+      return total + (category.enabled ? category.items.length : 0);
+    }, 0);
+  };
 
-  // 취출
-  const [ejectionItems, setEjectionItems] = useState<CheckItem[]>([
-    { id: 'e1', item: '제품 취출 구조 - 범퍼 후드 매칭부', spec: '□반영 □미 반영 ■사양 삭제', checked: false },
-    { id: 'e2', item: '제품 취출 구조 - 범퍼 후드 매칭부', spec: '□반영 □미 반영 ■사양 삭제', checked: false },
-    { id: 'e3', item: '언더컷 구조 확인', spec: '■반영 □미 반영', checked: false },
-    { id: 'e4', item: '빠기 구멍 4도 반영', spec: '■반영 □미 반영', checked: false }
-  ]);
+  const getCheckedItems = () => {
+    return categories.reduce((total, category) => {
+      if (!category.enabled) return total;
+      return total + category.items.filter(item => item.checked).length;
+    }, 0);
+  };
 
-  // MIC 제품
-  const [micItems, setMicItems] = useState<CheckItem[]>([
-    { id: 'mic1', item: 'MIC 사양 게이트 형상 반영 (HKMC 스프루 제작 가이드)', spec: '□반영 □미 반영 ■사양 삭제', checked: false },
-    { id: 'mic2', item: '성형안전성 확보 제품 투계 반영', spec: '□반영 □미 반영 ■사양 삭제', checked: false }
-  ]);
-
-  // 기타 검토사항
-  const [otherItems, setOtherItems] = useState<CheckItem[]>([
-    { id: 'o1', item: 'TPO 보스 내경 M4 : Φ3.2 / M5 : Φ4.2', spec: '■반영 □미 반영 □사양 삭제', checked: false },
-    { id: 'o2', item: '플러터 0.5mm 위치 아동 (외관 매칭성 개선)', spec: '■반영 □미 반영 □사양 삭제', checked: false }
-  ]);
-
-  // 도금
-  const [platingItems, setPlatingItems] = useState<CheckItem[]>([
-    { id: 'p1', item: '게이트 위치 / 가스 환경성 - ABS : 250mm ↓ - PC+ABS : 200mm ↓', spec: '□반영 □미 반영 ■사양 삭제', checked: false },
-    { id: 'p2', item: '수축률', spec: '□반영 □미 반영 ■사양 삭제', checked: false },
-    { id: 'p3', item: '보스 조립본 엇지 1R 반영', spec: '□반영 □미 반영 ■사양 삭제', checked: false }
-  ]);
-
-  // 리어 램프
-  const [rearLampItems, setRearLampItems] = useState<CheckItem[]>([
-    { id: 'r1', item: '리어 램프 - 보스 : 5도 이상', spec: '□반영 □미 반영 ■사양 삭제', checked: false },
-    { id: 'r2', item: '리어 램프 - 보스 : 투계 5.0t 이상', spec: '□반영 □미 반영 ■사양 삭제', checked: false }
-  ]);
+  const getCompletionRate = () => {
+    const total = getTotalCheckItems();
+    const checked = getCheckedItems();
+    return total > 0 ? Math.round((checked / total) * 100) : 0;
+  };
 
   useEffect(() => {
     fetchData();
@@ -123,31 +71,142 @@ const MoldChecklist: React.FC = () => {
     }
   };
 
-  const handleCheckToggle = (items: CheckItem[], setItems: any, id: string) => {
-    setItems(items.map((item: CheckItem) => 
-      item.id === id ? { ...item, checked: !item.checked } : item
+  // 카테고리 활성화/비활성화 토글
+  const handleCategoryToggle = (categoryId: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId ? { ...cat, enabled: !cat.enabled } : cat
     ));
   };
 
-  const handleSpecChange = (items: CheckItem[], setItems: any, id: string, value: string) => {
-    setItems(items.map((item: CheckItem) => 
-      item.id === id ? { ...item, specValue: value } : item
+  // 항목 체크 토글
+  const handleCheckToggle = (categoryId: string, itemId: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === itemId ? { ...item, checked: !item.checked } : item
+            )
+          }
+        : cat
     ));
   };
 
-  const handleCheckboxToggle = (items: CheckItem[], setItems: any, id: string, option: string) => {
-    setItems(items.map((item: CheckItem) => {
-      if (item.id === id) {
-        const currentValues = item.specValue?.split(',') || [];
-        const newValues = currentValues.includes(option)
-          ? currentValues.filter(v => v !== option)
-          : [...currentValues, option];
-        return { ...item, specValue: newValues.join(',') };
-      }
-      return item;
-    }));
+  // 규격/사양 값 변경
+  const handleSpecChange = (categoryId: string, itemId: string, value: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === itemId ? { ...item, specValue: value } : item
+            )
+          }
+        : cat
+    ));
   };
 
+  // 점검 내용 입력 값 변경
+  const handleInspectionChange = (categoryId: string, itemId: string, value: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === itemId ? { ...item, inspectionValue: value } : item
+            )
+          }
+        : cat
+    ));
+  };
+
+  // 체크박스 옵션 토글 (다중 선택)
+  const handleCheckboxToggle = (categoryId: string, itemId: string, option: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item => {
+              if (item.id === itemId) {
+                const currentValues = item.specValue?.split(',').filter(v => v) || [];
+                const newValues = currentValues.includes(option)
+                  ? currentValues.filter(v => v !== option)
+                  : [...currentValues, option];
+                return { ...item, specValue: newValues.join(',') };
+              }
+              return item;
+            })
+          }
+        : cat
+    ));
+  };
+
+  // 날짜 선택 항목의 체크박스 토글 (inspectionValue 사용)
+  const handleDateCheckboxToggle = (categoryId: string, itemId: string, option: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item => {
+              if (item.id === itemId) {
+                const currentValues = item.inspectionValue?.split(',').filter(v => v) || [];
+                const newValues = currentValues.includes(option)
+                  ? currentValues.filter(v => v !== option)
+                  : [...currentValues, option];
+                return { ...item, inspectionValue: newValues.join(',') };
+              }
+              return item;
+            })
+          }
+        : cat
+    ));
+  };
+
+  // 파일 첨부 추가
+  const handleFileUpload = (categoryId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newAttachments: FileAttachment[] = Array.from(files).map((file, index) => ({
+        id: `${categoryId}-file-${Date.now()}-${index}`,
+        name: file.name,
+        url: URL.createObjectURL(file),
+        uploadedAt: new Date().toISOString()
+      }));
+
+      setCategories(categories.map(cat =>
+        cat.id === categoryId
+          ? { ...cat, attachments: [...(cat.attachments || []), ...newAttachments] }
+          : cat
+      ));
+    }
+  };
+
+  // 파일 첨부 삭제
+  const handleFileRemove = (categoryId: string, fileId: string) => {
+    setCategories(categories.map(cat =>
+      cat.id === categoryId
+        ? { ...cat, attachments: (cat.attachments || []).filter(f => f.id !== fileId) }
+        : cat
+    ));
+  };
+
+  // 파일 미리보기
+  const handleFilePreview = (file: FileAttachment) => {
+    setPreviewFile(file);
+    setShowPreview(true);
+  };
+
+  // 파일 다운로드
+  const handleFileDownload = (file: FileAttachment) => {
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // 저장
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('qr_session_token');
@@ -160,14 +219,7 @@ const MoldChecklist: React.FC = () => {
         clampingForce,
         eoCutDate,
         initialToDate,
-        verificationItems,
-        moldingItems,
-        sinkMarkItems,
-        ejectionItems,
-        micItems,
-        otherItems,
-        platingItems,
-        rearLampItems,
+        categories,
         productImage,
         approvalStatus: 'pending',
         submittedAt: new Date().toISOString()
@@ -201,99 +253,227 @@ const MoldChecklist: React.FC = () => {
     }
   };
 
-  const renderSpecField = (item: CheckItem, items: CheckItem[], setItems: any) => {
+  // 규격/사양 필드 렌더링
+  const renderSpecField = (category: CategorySection, item: CheckItem) => {
+    const disabled = !category.enabled || approvalStatus === 'approved';
+
     if (item.specType === 'input') {
       return (
         <input
           type="text"
           value={item.specValue || ''}
-          onChange={(e) => handleSpecChange(items, setItems, item.id, e.target.value)}
+          onChange={(e) => handleSpecChange(category.id, item.id, e.target.value)}
           className="w-full px-2 py-1 border border-slate-300 rounded text-sm text-center"
-          disabled={approvalStatus === 'approved'}
+          disabled={disabled}
         />
       );
     }
-    
-    if (item.specType === 'radio' && item.specOptions) {
+
+    if (item.specType === 'date-inspection' && item.specOptions) {
       return (
-        <div className="flex flex-wrap gap-2 justify-center">
-          {item.specOptions.map((option) => (
-            <label key={option} className="flex items-center gap-1 cursor-pointer">
-              <input
-                type="radio"
-                name={item.id}
-                value={option}
-                checked={item.specValue === option}
-                onChange={() => handleSpecChange(items, setItems, item.id, option)}
-                className="cursor-pointer"
-                disabled={approvalStatus === 'approved'}
-              />
-              <span className="text-sm">{option}</span>
-            </label>
-          ))}
+        <div className="flex flex-col gap-2">
+          <input
+            type="date"
+            value={item.specValue || ''}
+            onChange={(e) => handleSpecChange(category.id, item.id, e.target.value)}
+            className="w-full px-2 py-1 border border-slate-300 rounded text-sm"
+            disabled={disabled}
+          />
+          <div className="flex flex-wrap gap-2 justify-center">
+            {item.specOptions.map((option) => {
+              const selectedValues = item.inspectionValue?.split(',').filter(v => v) || [];
+              return (
+                <label key={option} className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedValues.includes(option)}
+                    onChange={() => handleDateCheckboxToggle(category.id, item.id, option)}
+                    className="cursor-pointer"
+                    disabled={disabled}
+                  />
+                  <span className="text-sm">{option}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
       );
     }
-    
-    if (item.specType === 'checkbox' && item.specOptions) {
-      const selectedValues = item.specValue?.split(',') || [];
+
+    if (item.specType === 'select-inspection' && item.specOptions) {
       return (
-        <div className="flex flex-wrap gap-2 justify-center">
-          {item.specOptions.map((option) => (
-            <label key={option} className="flex items-center gap-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedValues.includes(option)}
-                onChange={() => handleCheckboxToggle(items, setItems, item.id, option)}
-                className="cursor-pointer"
-                disabled={approvalStatus === 'approved'}
-              />
-              <span className="text-sm">{option}</span>
-            </label>
-          ))}
+        <div className="flex flex-col gap-2">
+          <select
+            value={item.specValue || ''}
+            onChange={(e) => handleSpecChange(category.id, item.id, e.target.value)}
+            className="w-full px-2 py-1 border border-slate-300 rounded text-sm"
+            disabled={disabled}
+          >
+            <option value="">재질 선택</option>
+            {item.specOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={item.inspectionValue || ''}
+            onChange={(e) => handleInspectionChange(category.id, item.id, e.target.value)}
+            placeholder="점검 내용 입력"
+            className="w-full px-2 py-1 border border-slate-300 rounded text-sm"
+            disabled={disabled}
+          />
         </div>
       );
     }
-    
-    return <span className="text-sm">{item.spec || item.specValue || '-'}</span>;
+
+    if (item.specType === 'checkbox-inspection' && item.specOptions) {
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {item.specOptions.map((option) => {
+              const selectedValues = item.specValue?.split(',').filter(v => v) || [];
+              return (
+                <label key={option} className="flex items-center gap-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedValues.includes(option)}
+                    onChange={() => handleCheckboxToggle(category.id, item.id, option)}
+                    className="cursor-pointer"
+                    disabled={disabled}
+                  />
+                  <span className="text-sm">{option}</span>
+                </label>
+              );
+            })}
+          </div>
+          <input
+            type="text"
+            value={item.inspectionValue || ''}
+            onChange={(e) => handleInspectionChange(category.id, item.id, e.target.value)}
+            placeholder="점검 내용 입력"
+            className="w-full px-2 py-1 border border-slate-300 rounded text-sm"
+            disabled={disabled}
+          />
+        </div>
+      );
+    }
+
+    return <span className="text-sm text-slate-600">{item.spec || item.specValue || '-'}</span>;
   };
 
-  const renderTable = (title: string, items: CheckItem[], setItems: any) => (
-    <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-6">
-      <div className="bg-gradient-to-r from-slate-700 to-slate-900 px-6 py-3">
-        <h3 className="text-lg font-bold text-white">{title}</h3>
+  // 카테고리 테이블 렌더링
+  const renderCategoryTable = (category: CategorySection) => (
+    <div key={category.id} className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-6">
+      {/* 카테고리 헤더 */}
+      <div className="bg-gradient-to-r from-slate-700 to-slate-900 px-6 py-3 flex items-center justify-between">
+        <h3 className="text-lg font-bold text-white">{category.title}</h3>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-white text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={category.enabled}
+              onChange={() => handleCategoryToggle(category.id)}
+              className="w-4 h-4 cursor-pointer"
+              disabled={approvalStatus === 'approved'}
+            />
+            <span className="font-medium">{category.enabled ? '점검대상' : '비대상'}</span>
+          </label>
+        </div>
       </div>
+
+      {/* 테이블 */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-slate-100">
               <th className="border border-slate-300 px-4 py-2 text-sm font-bold w-16">No.</th>
-              <th className="border border-slate-300 px-4 py-2 text-sm font-bold">항목</th>
-              <th className="border border-slate-300 px-4 py-2 text-sm font-bold w-64">규격/사양</th>
+              <th className="border border-slate-300 px-4 py-2 text-sm font-bold">점검 항목</th>
+              <th className="border border-slate-300 px-4 py-2 text-sm font-bold w-80">규격/사양</th>
               <th className="border border-slate-300 px-4 py-2 text-sm font-bold w-24">확인</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item: CheckItem, index: number) => (
-              <tr key={item.id} className="hover:bg-slate-50">
+            {category.items.map((item, index) => (
+              <tr
+                key={item.id}
+                className={`hover:bg-slate-50 ${!category.enabled ? 'bg-slate-50 opacity-50' : ''}`}
+              >
                 <td className="border border-slate-300 px-4 py-2 text-center text-sm">{index + 1}</td>
                 <td className="border border-slate-300 px-4 py-2 text-sm">{item.item}</td>
                 <td className="border border-slate-300 px-4 py-2 text-sm">
-                  {renderSpecField(item, items, setItems)}
+                  {renderSpecField(category, item)}
                 </td>
                 <td className="border border-slate-300 px-4 py-2 text-center">
                   <input
                     type="checkbox"
                     checked={item.checked}
-                    onChange={() => handleCheckToggle(items, setItems, item.id)}
+                    onChange={() => handleCheckToggle(category.id, item.id)}
                     className="w-5 h-5 cursor-pointer"
-                    disabled={approvalStatus === 'approved'}
+                    disabled={!category.enabled || approvalStatus === 'approved'}
                   />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* 파일 첨부 섹션 */}
+      <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-bold text-slate-700">관련 자료 첨부</h4>
+          <label className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 cursor-pointer">
+            <Paperclip className="h-4 w-4" />
+            파일 첨부
+            <input
+              type="file"
+              multiple
+              onChange={(e) => handleFileUpload(category.id, e)}
+              className="hidden"
+              disabled={!category.enabled || approvalStatus === 'approved'}
+            />
+          </label>
+        </div>
+        {category.attachments && category.attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {category.attachments.map((file) => (
+              <div
+                key={file.id}
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm hover:border-blue-400 transition-colors"
+              >
+                <Paperclip className="h-4 w-4 text-slate-500" />
+                <span className="text-slate-700 font-medium">{file.name}</span>
+                <div className="flex items-center gap-1 ml-2 border-l pl-2">
+                  <button
+                    onClick={() => handleFilePreview(file)}
+                    className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                    title="미리보기"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleFileDownload(file)}
+                    className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                    title="다운로드"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                  {category.enabled && approvalStatus !== 'approved' && (
+                    <button
+                      onClick={() => handleFileRemove(category.id, file.id)}
+                      className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      title="삭제"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -311,6 +491,7 @@ const MoldChecklist: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* 헤더 */}
       <div className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -324,6 +505,23 @@ const MoldChecklist: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* 점검 진행률 표시 */}
+              <div className="flex items-center gap-4 px-4 py-2 bg-slate-100 rounded-lg border border-slate-300">
+                <div className="text-center">
+                  <p className="text-xs text-slate-600 mb-1">총 점검항목</p>
+                  <p className="text-2xl font-bold text-slate-800">{getTotalCheckItems()}</p>
+                </div>
+                <div className="h-12 w-px bg-slate-300"></div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-600 mb-1">완료</p>
+                  <p className="text-2xl font-bold text-blue-600">{getCheckedItems()}</p>
+                </div>
+                <div className="h-12 w-px bg-slate-300"></div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-600 mb-1">진행률</p>
+                  <p className="text-2xl font-bold text-green-600">{getCompletionRate()}%</p>
+                </div>
+              </div>
               {approvalStatus === 'approved' && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg">
                   <CheckCircle className="h-5 w-5" />
@@ -378,9 +576,9 @@ const MoldChecklist: React.FC = () => {
                     </tr>
                     <tr>
                       <td className="border border-slate-400 bg-slate-200 px-4 py-2 font-bold">작성일</td>
-                      <td className="border border-slate-400 px-4 py-2 bg-slate-50">2020.09.18</td>
+                      <td className="border border-slate-400 px-4 py-2 bg-slate-50">{new Date().toLocaleDateString('ko-KR')}</td>
                       <td className="border border-slate-400 bg-slate-200 px-4 py-2 font-bold">작성자</td>
-                      <td className="border border-slate-400 px-4 py-2 bg-slate-50">오일특과장</td>
+                      <td className="border border-slate-400 px-4 py-2 bg-slate-50">점검자</td>
                     </tr>
                     <tr>
                       <td className="border border-slate-400 bg-slate-200 px-4 py-2 font-bold">양산처</td>
@@ -470,35 +668,72 @@ const MoldChecklist: React.FC = () => {
           </div>
         </div>
 
-        {/* 검증 내용 */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <span>▶</span> 검증 내용
-          </h2>
-          {renderTable('금형', verificationItems, setVerificationItems)}
-        </div>
-
-        {/* 성형예상 */}
-        {renderTable('성형예상', moldingItems, setMoldingItems)}
-
-        {/* 싱크마크 */}
-        {renderTable('싱크마크', sinkMarkItems, setSinkMarkItems)}
-
-        {/* 취출 */}
-        {renderTable('취출', ejectionItems, setEjectionItems)}
-
-        {/* MIC 제품 */}
-        {renderTable('MIC 제품', micItems, setMicItems)}
-
-        {/* 기타 검토사항 */}
-        {renderTable('기타 검토사항', otherItems, setOtherItems)}
-
-        {/* 도금 */}
-        {renderTable('도금', platingItems, setPlatingItems)}
-
-        {/* 리어 램프 */}
-        {renderTable('리어 램프', rearLampItems, setRearLampItems)}
+        {/* 9개 카테고리 렌더링 */}
+        {categories.map(category => renderCategoryTable(category))}
       </div>
+
+      {/* 파일 미리보기 모달 */}
+      {showPreview && previewFile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <Paperclip className="h-5 w-5 text-slate-600" />
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">{previewFile.name}</h3>
+                  <p className="text-xs text-slate-500">
+                    첨부일시: {new Date(previewFile.uploadedAt).toLocaleString('ko-KR')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleFileDownload(previewFile)}
+                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  다운로드
+                </button>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-slate-600" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 overflow-auto max-h-[calc(90vh-80px)]">
+              {previewFile.name.match(/\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i) ? (
+                <img
+                  src={previewFile.url}
+                  alt={previewFile.name}
+                  className="max-w-full h-auto mx-auto rounded-lg shadow-lg"
+                />
+              ) : previewFile.name.match(/\.(pdf)$/i) ? (
+                <iframe
+                  src={previewFile.url}
+                  className="w-full h-[70vh] border border-slate-300 rounded-lg"
+                  title={previewFile.name}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <Paperclip className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-600 mb-4">
+                    이 파일 형식은 미리보기를 지원하지 않습니다.
+                  </p>
+                  <button
+                    onClick={() => handleFileDownload(previewFile)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mx-auto"
+                  >
+                    <Download className="h-4 w-4" />
+                    파일 다운로드
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

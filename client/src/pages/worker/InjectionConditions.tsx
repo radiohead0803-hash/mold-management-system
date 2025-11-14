@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Thermometer, Gauge, Clock, Zap, AlertCircle, GitBranch, TrendingUp } from 'lucide-react';
+import { ArrowLeft, AlertCircle, GitBranch, TrendingUp } from 'lucide-react';
 
 interface MoldBasicInfo {
   moldId: string;
@@ -239,113 +239,117 @@ const InjectionConditions: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      <div className="bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(`/worker/mold/${moldId}`)}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 rounded-lg"
               >
-                <ArrowLeft className="h-5 w-5 text-slate-600" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center">
-                  <Thermometer className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-slate-900">{moldInfo?.moldId} - 사출조건 관리</h1>
-                  <p className="text-sm text-slate-600">{moldInfo?.name}</p>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold">사출조건 관리</h1>
+                <p className="text-sm text-slate-600">{moldInfo?.moldId} - {moldInfo?.name}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* 버전 정보 */}
-        <div className="bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/20 rounded-lg">
-                <GitBranch className="h-6 w-6" />
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* 제작사양 및 추진일정 */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 px-6 py-3 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-white">□</span> 사출조건 관리
+            </h2>
+            <span className="text-white text-xs">Creative Auto Module System</span>
+          </div>
+
+          {/* 버전 정보 */}
+          <div className="p-6 bg-slate-50">
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-slate-100 rounded-lg">
+                    <GitBranch className="h-6 w-6 text-slate-700" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">현재 적용 버전</p>
+                    <h2 className="text-3xl font-bold text-slate-900">{injectionData?.version}</h2>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-600 mb-1">마지막 업데이트</p>
+                  <p className="text-lg font-semibold text-slate-900">{injectionData?.lastUpdated}</p>
+                  <p className="text-sm text-slate-600">작업자: {injectionData?.updatedBy}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm opacity-90 mb-1">현재 적용 버전</p>
-                <h2 className="text-3xl font-bold">{injectionData?.version}</h2>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm opacity-90 mb-1">마지막 업데이트</p>
-              <p className="text-lg font-semibold">{injectionData?.lastUpdated}</p>
-              <p className="text-sm opacity-75">작업자: {injectionData?.updatedBy}</p>
             </div>
           </div>
-        </div>
 
-        {/* 원재료 정보 및 표준 사출조건 */}
-        {materialRecommendation && (
-          <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              원재료 정보 및 표준 사출조건
+          {/* 원재료 정보 및 표준 사출조건 */}
+          {materialRecommendation && (
+            <div className="p-6 pt-0 bg-slate-50">
+              <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+                <span>▶</span> 원재료 정보 및 표준 사출조건
+              </h3>
+              <div className="bg-white rounded-lg border-2 border-slate-300 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-1">원재료</p>
+                    <p className="text-xl font-bold text-slate-900">{materialRecommendation.material}</p>
+                    {moldInfo?.materialGrade && (
+                      <p className="text-sm text-slate-600 mt-1">등급: {moldInfo.materialGrade}</p>
+                    )}
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-1">노즐 온도 권장범위</p>
+                    <p className="text-xl font-bold text-slate-900">{materialRecommendation.nozzleTempRange}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-1">실린더 온도 권장범위</p>
+                    <p className="text-xl font-bold text-slate-900">{materialRecommendation.cylinderTempRange}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-1">금형 온도 권장범위</p>
+                    <p className="text-xl font-bold text-slate-900">{materialRecommendation.moldTempRange}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-1">사출압력 권장범위</p>
+                    <p className="text-xl font-bold text-slate-900">{materialRecommendation.injectionPressureRange}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <p className="text-sm text-slate-600 mb-1">사출속도</p>
+                    <p className="text-xl font-bold text-slate-900">{materialRecommendation.injectionSpeedRange}</p>
+                  </div>
+                </div>
+                <div className="mt-4 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <p className="text-sm font-semibold mb-2 text-blue-900">💡 재질별 주의사항</p>
+                  <ul className="space-y-1">
+                    {materialRecommendation.notes.map((note, index) => (
+                      <li key={index} className="text-sm text-blue-800 flex items-start gap-2">
+                        <span className="text-blue-600">•</span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 온도 설정 */}
+          <div className="p-6 pt-0 bg-slate-50">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 온도 설정
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white/10 rounded-lg p-4">
-                <p className="text-sm opacity-90 mb-1">원재료</p>
-                <p className="text-xl font-bold">{materialRecommendation.material}</p>
-                {moldInfo?.materialGrade && (
-                  <p className="text-sm opacity-75 mt-1">등급: {moldInfo.materialGrade}</p>
-                )}
-              </div>
-              <div className="bg-white/10 rounded-lg p-4">
-                <p className="text-sm opacity-90 mb-1">노즐 온도 권장범위</p>
-                <p className="text-xl font-bold">{materialRecommendation.nozzleTempRange}</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4">
-                <p className="text-sm opacity-90 mb-1">실린더 온도 권장범위</p>
-                <p className="text-xl font-bold">{materialRecommendation.cylinderTempRange}</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4">
-                <p className="text-sm opacity-90 mb-1">금형 온도 권장범위</p>
-                <p className="text-xl font-bold">{materialRecommendation.moldTempRange}</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4">
-                <p className="text-sm opacity-90 mb-1">사출압력 권장범위</p>
-                <p className="text-xl font-bold">{materialRecommendation.injectionPressureRange}</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-4">
-                <p className="text-sm opacity-90 mb-1">사출속도</p>
-                <p className="text-xl font-bold">{materialRecommendation.injectionSpeedRange}</p>
-              </div>
-            </div>
-            <div className="mt-4 bg-white/10 rounded-lg p-4">
-              <p className="text-sm font-semibold mb-2">💡 재질별 주의사항</p>
-              <ul className="space-y-1">
-                {materialRecommendation.notes.map((note, index) => (
-                  <li key={index} className="text-sm opacity-90 flex items-start gap-2">
-                    <span className="text-yellow-300">•</span>
-                    <span>{note}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {/* 온도 설정 */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 to-orange-600 px-6 py-3">
-            <div className="flex items-center gap-2">
-              <Thermometer className="h-5 w-5 text-white" />
-              <h2 className="text-base font-bold text-white">🌡️ 온도 설정</h2>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-4 border-2 border-red-200">
                 <p className="text-xs text-red-600 font-medium mb-1">노즐 온도</p>
                 <p className="text-2xl font-bold text-red-700">{injectionData?.temperature.nozzle}</p>
@@ -371,65 +375,47 @@ const InjectionConditions: React.FC = () => {
                 <p className="text-2xl font-bold text-blue-700">{injectionData?.temperature.mold}</p>
                 <p className="text-xs text-blue-500">°C</p>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 압력 및 속도 설정 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* 압력 */}
-          <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-600 px-6 py-3">
-              <div className="flex items-center gap-2">
-                <Gauge className="h-5 w-5 text-white" />
-                <h2 className="text-base font-bold text-white">⚡ 압력 설정</h2>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">사출압력</p>
-                  <p className="text-xs text-blue-500 mt-1">Injection Pressure</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-blue-700">{injectionData?.pressure.injection}</p>
-                  <p className="text-sm text-blue-500">MPa</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-cyan-50 rounded-lg border border-cyan-200">
-                <div>
-                  <p className="text-sm text-cyan-600 font-medium">보압</p>
-                  <p className="text-xs text-cyan-500 mt-1">Holding Pressure</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-cyan-700">{injectionData?.pressure.holding}</p>
-                  <p className="text-sm text-cyan-500">MPa</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                <div>
-                  <p className="text-sm text-indigo-600 font-medium">배압</p>
-                  <p className="text-xs text-indigo-500 mt-1">Back Pressure</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-indigo-700">{injectionData?.pressure.back}</p>
-                  <p className="text-sm text-indigo-500">MPa</p>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* 속도 및 시간 */}
-          <div className="space-y-6">
-            {/* 속도 */}
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 px-6 py-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-white" />
-                  <h2 className="text-base font-bold text-white">🚀 속도 설정</h2>
+          {/* 압력 및 속도 설정 */}
+          <div className="p-6 pt-0 bg-slate-50">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 압력 및 속도 설정
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div>
+                    <p className="text-sm text-blue-600 font-medium">사출압력</p>
+                    <p className="text-xs text-blue-500 mt-1">Injection Pressure</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-blue-700">{injectionData?.pressure.injection}</p>
+                    <p className="text-sm text-blue-500">MPa</p>
+                  </div>
                 </div>
-              </div>
-              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                  <div>
+                    <p className="text-sm text-cyan-600 font-medium">보압</p>
+                    <p className="text-xs text-cyan-500 mt-1">Holding Pressure</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-cyan-700">{injectionData?.pressure.holding}</p>
+                    <p className="text-sm text-cyan-500">MPa</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <div>
+                    <p className="text-sm text-indigo-600 font-medium">배압</p>
+                    <p className="text-xs text-indigo-500 mt-1">Back Pressure</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-indigo-700">{injectionData?.pressure.back}</p>
+                    <p className="text-sm text-indigo-500">MPa</p>
+                  </div>
+                </div>
                 <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
                   <div>
                     <p className="text-sm text-purple-600 font-medium">사출속도</p>
@@ -453,18 +439,14 @@ const InjectionConditions: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 시간 설정 */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-white" />
-              <h2 className="text-base font-bold text-white">⏱️ 시간 설정</h2>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* 시간 설정 */}
+          <div className="p-6 pt-0 bg-slate-50">
+            <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <span>▶</span> 시간 설정
+            </h3>
+            <div className="bg-white rounded-lg border-2 border-slate-300 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
                 <p className="text-xs text-green-600 font-medium mb-1">보압시간</p>
                 <p className="text-2xl font-bold text-green-700">{injectionData?.time.holding}</p>
@@ -485,12 +467,13 @@ const InjectionConditions: React.FC = () => {
                 <p className="text-2xl font-bold text-slate-700">{injectionData?.other.cushion}</p>
                 <p className="text-xs text-slate-500">mm</p>
               </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 안내 및 주의사항 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 안내 및 주의사항 */}
+          <div className="p-6 pt-0 bg-slate-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
@@ -516,6 +499,8 @@ const InjectionConditions: React.FC = () => {
                   <li>• 조건 변경은 승인된 담당자만 가능</li>
                 </ul>
               </div>
+            </div>
+          </div>
             </div>
           </div>
         </div>

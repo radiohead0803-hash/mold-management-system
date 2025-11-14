@@ -291,12 +291,52 @@ const HardnessMeasurement: React.FC = () => {
           <h2 className="text-lg font-bold text-slate-900 mb-4">🔧 금형 재질</h2>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <label className="text-sm font-medium text-blue-900">상측 (Cavity)</label>
-              <p className="text-lg font-bold text-blue-700">{moldInfo?.cavityMaterial || '양산처'}</p>
+              <label className="text-sm font-medium text-blue-900 mb-2 block">상측 (Cavity)</label>
+              <select
+                value={moldInfo?.cavityMaterial || ''}
+                onChange={(e) => {
+                  if (moldInfo) {
+                    setMoldInfo({ ...moldInfo, cavityMaterial: e.target.value });
+                    // 선택한 재질에 맞는 경도 기준 자동 설정
+                    const standard = hardnessStandards.find(s => 
+                      s.material.includes(e.target.value) || e.target.value.includes(s.material.split(',')[0].trim())
+                    );
+                    if (standard) setSelectedStandard(standard);
+                  }
+                }}
+                className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white text-blue-700 font-bold focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">선택하세요</option>
+                {hardnessStandards.map((std, idx) => (
+                  <option key={idx} value={std.material.split(',')[0].trim()}>
+                    {std.material}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <label className="text-sm font-medium text-orange-900">하측 (Core)</label>
-              <p className="text-lg font-bold text-orange-700">{moldInfo?.coreMaterial || '하측'}</p>
+              <label className="text-sm font-medium text-orange-900 mb-2 block">하측 (Core)</label>
+              <select
+                value={moldInfo?.coreMaterial || ''}
+                onChange={(e) => {
+                  if (moldInfo) {
+                    setMoldInfo({ ...moldInfo, coreMaterial: e.target.value });
+                    // 선택한 재질에 맞는 경도 기준 자동 설정
+                    const standard = hardnessStandards.find(s => 
+                      s.material.includes(e.target.value) || e.target.value.includes(s.material.split(',')[0].trim())
+                    );
+                    if (standard) setSelectedStandard(standard);
+                  }
+                }}
+                className="w-full px-3 py-2 border border-orange-300 rounded-lg bg-white text-orange-700 font-bold focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              >
+                <option value="">선택하세요</option>
+                {hardnessStandards.map((std, idx) => (
+                  <option key={idx} value={std.material.split(',')[0].trim()}>
+                    {std.material}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           
