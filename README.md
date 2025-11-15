@@ -46,13 +46,15 @@ Ver03/
 
 ## 설치 및 실행
 
-### 자동 설치 (Windows)
+### 로컬 개발 환경
+
+#### 자동 설치 (Windows)
 ```bash
 # 설치 스크립트 실행
 install.bat
 ```
 
-### 수동 설치
+#### 수동 설치
 ```bash
 # 루트 의존성 설치
 npm install
@@ -66,12 +68,12 @@ cd ../server
 npm install
 ```
 
-### 환경 설정
+#### 환경 설정
 1. `server/.env.example`을 `server/.env`로 복사
 2. 데이터베이스 연결 정보 수정
 3. PostgreSQL 서버 실행 확인
 
-### 개발 서버 시작
+#### 개발 서버 시작
 ```bash
 # 전체 개발 서버 (루트에서)
 npm run dev
@@ -83,6 +85,19 @@ cd client && npm run dev
 # 서버
 cd server && npm run dev
 ```
+
+### 프로덕션 배포 (Railway)
+
+#### 빠른 시작
+1. GitHub에 코드 푸시
+2. Railway에서 PostgreSQL + 백엔드 배포
+3. Vercel에서 프론트엔드 배포
+
+#### 상세 가이드
+- **Git 및 Railway 배포**: [`GIT_DEPLOYMENT_GUIDE.md`](./GIT_DEPLOYMENT_GUIDE.md) 참조
+- **Railway 배포 가이드**: [`RAILWAY_DEPLOYMENT.md`](./RAILWAY_DEPLOYMENT.md) 참조
+- **빠른 시작 가이드**: [`RAILWAY_QUICKSTART.md`](./RAILWAY_QUICKSTART.md) 참조
+- **문제 해결**: [`RAILWAY_TROUBLESHOOTING.md`](./RAILWAY_TROUBLESHOOTING.md) 참조
 
 ## 기술 스택
 

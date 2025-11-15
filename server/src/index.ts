@@ -61,11 +61,24 @@ const startServer = async () => {
 
     // Sync database (create tables)
     if (process.env.NODE_ENV === 'development') {
+      // Development: Use alter to update schema
       await sequelize.sync({ alter: true });
-      console.log('✅ Database synchronized.');
+      console.log('✅ Database synchronized (development mode).');
       
       // Create demo users
       await createDemoUsers();
+    } else if (process.env.NODE_ENV === 'production') {
+      // Production: Only sync without altering existing tables
+      // Use migrations for schema changes in production
+      await sequelize.sync({ alter: false });
+      console.log('✅ Database synchronized (production mode).');
+      
+      // Create demo users if they don't exist
+      await createDemoUsers();
+    } else {
+      // Default behavior
+      await sequelize.sync();
+      console.log('✅ Database synchronized.');
     }
 
     // Start server
@@ -73,6 +86,7 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🌐 Client URL: ${process.env.CLIENT_URL || 'http://localhost:3000'}`);
+      console.log(`🗄️  Database: ${process.env.DATABASE_URL ? 'Railway PostgreSQL' : 'Local PostgreSQL'}`);
     });
   } catch (error) {
     console.error('❌ Unable to start server:', error);
