@@ -99,15 +99,3 @@ export {
   Notification,
   AuditLog,
 };
-
-export type {
-  UserModel,
-  MoldModel,
-  DailyCheckModel,
-  InspectionModel,
-  RepairModel,
-  ShotModel,
-  QRSessionModel,
-  NotificationModel,
-  AuditLogModel,
-};
