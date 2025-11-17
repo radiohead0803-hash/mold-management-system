@@ -7,7 +7,8 @@
     "dev": "nodemon src/index.ts",
     "build": "npx tsc --skipLibCheck --noEmitOnError false || true",
     "start": "node dist/index.js",
-    "test": "jest"
+    "test": "jest",
+    "seed:test": "ts-node src/scripts/createTestMolds.ts"
   },
   "keywords": ["mold", "management", "api", "express"],
   "author": "Mold Management Team",

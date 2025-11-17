@@ -1,6 +1,173 @@
 import { Mold, User, Repair, DailyCheck, Inspection } from '../models';
 
 /**
+ * 테스트용 QR 코드 기반 금형 데이터 생성
+ */
+export async function createTestMoldsWithQR() {
+  console.log('📦 Creating test molds with QR codes...');
+
+  // 관리자 사용자 찾기
+  const adminUser = await User.findOne({ where: { username: 'admin' } });
+  if (!adminUser) {
+    console.log('⚠️ Admin user not found. Please create demo users first.');
+    return [];
+  }
+
+  const testMolds = [
+    {
+      qr_code: 'M-2024-001',
+      part_number: 'P-2024-001',
+      part_name: '스마트폰 케이스',
+      vehicle_model: 'GV80',
+      item_type: '외판',
+      manufacturer: '제네시스',
+      investment_cost: 25000000,
+      progress_stage: '정상',
+      manufacturing_method: '사출',
+      supplier_planned: '공급사A',
+      supplier_actual: '공급사A',
+      completion_planned: new Date('2024-03-15'),
+      completion_actual: new Date('2024-03-10'),
+      cvt_quantity: 2,
+      mold_weight: 1200,
+      hot_runner: true,
+      gate_count: 4,
+      shrinkage_rate: 0.995,
+      storage_location: 'A-01',
+      storage_position: 'A-01-1',
+      status: '정상'
+    },
+    {
+      qr_code: 'M-2024-002',
+      part_number: 'P-2024-002',
+      part_name: '자동차 부품',
+      vehicle_model: 'G80',
+      item_type: '내판',
+      manufacturer: '제네시스',
+      investment_cost: 32000000,
+      progress_stage: '정상',
+      manufacturing_method: '프레스',
+      supplier_planned: '공급사B',
+      supplier_actual: '공급사B',
+      completion_planned: new Date('2024-04-20'),
+      completion_actual: new Date('2024-04-18'),
+      cvt_quantity: 4,
+      mold_weight: 2500,
+      hot_runner: false,
+      gate_count: 2,
+      shrinkage_rate: 0.992,
+      storage_location: 'A-02',
+      storage_position: 'A-02-3',
+      status: '정상'
+    },
+    {
+      qr_code: 'M-2024-003',
+      part_number: 'P-2024-003',
+      part_name: '플라스틱 용기',
+      vehicle_model: 'GV70',
+      item_type: '구조물',
+      manufacturer: '현대',
+      investment_cost: 18000000,
+      progress_stage: '주의',
+      manufacturing_method: '사출',
+      supplier_planned: '공급사C',
+      supplier_actual: '공급사C',
+      completion_planned: new Date('2024-05-10'),
+      completion_actual: new Date('2024-05-12'),
+      cvt_quantity: 1,
+      mold_weight: 800,
+      hot_runner: true,
+      gate_count: 8,
+      shrinkage_rate: 0.998,
+      storage_location: 'B-01',
+      storage_position: 'B-01-5',
+      status: '주의'
+    },
+    {
+      qr_code: 'M-2024-004',
+      part_number: 'P-2024-004',
+      part_name: '전자부품',
+      vehicle_model: 'K8',
+      item_type: '외판',
+      manufacturer: '기아',
+      investment_cost: 28000000,
+      progress_stage: '주의',
+      manufacturing_method: '다이캐스팅',
+      supplier_planned: '공급사A',
+      supplier_actual: '공급사A',
+      completion_planned: new Date('2024-06-01'),
+      completion_actual: new Date('2024-06-05'),
+      cvt_quantity: 2,
+      mold_weight: 1500,
+      hot_runner: false,
+      gate_count: 4,
+      shrinkage_rate: 0.994,
+      storage_location: 'B-02',
+      storage_position: 'B-02-2',
+      status: '주의'
+    },
+    {
+      qr_code: 'M-2024-005',
+      part_number: 'P-2024-005',
+      part_name: '의료기기',
+      vehicle_model: 'Tucson',
+      item_type: '내판',
+      manufacturer: '현대',
+      investment_cost: 45000000,
+      progress_stage: '긴급',
+      manufacturing_method: '사출',
+      supplier_planned: '공급사B',
+      supplier_actual: '공급사B',
+      completion_planned: new Date('2024-07-15'),
+      completion_actual: new Date('2024-07-20'),
+      cvt_quantity: 4,
+      mold_weight: 3200,
+      hot_runner: true,
+      gate_count: 2,
+      shrinkage_rate: 0.991,
+      storage_location: 'C-01',
+      storage_position: 'C-01-4',
+      status: '긴급'
+    },
+    {
+      qr_code: 'M-2024-006',
+      part_number: 'P-2024-006',
+      part_name: '가전제품',
+      vehicle_model: 'Santa Fe',
+      item_type: '구조물',
+      manufacturer: '현대',
+      investment_cost: 38000000,
+      progress_stage: '긴급',
+      manufacturing_method: '프레스',
+      supplier_planned: '공급사C',
+      supplier_actual: '공급사C',
+      completion_planned: new Date('2024-08-10'),
+      completion_actual: new Date('2024-08-15'),
+      cvt_quantity: 2,
+      mold_weight: 2800,
+      hot_runner: false,
+      gate_count: 4,
+      shrinkage_rate: 0.993,
+      storage_location: 'C-02',
+      storage_position: 'C-02-6',
+      status: '긴급'
+    }
+  ];
+
+  const molds = [];
+  for (const moldData of testMolds) {
+    const mold = await Mold.create({
+      ...moldData,
+      created_by: adminUser.id
+    });
+    molds.push(mold);
+  }
+
+  console.log(`✅ Created ${molds.length} test molds with QR codes`);
+  return molds;
+}
+
+/**
  * 샘플 금형 데이터 생성
  */
 export async function createSampleMolds() {
@@ -126,14 +293,16 @@ export async function createAllSampleData() {
   try {
     console.log('🚀 Starting sample data creation...');
     
+    const testMolds = await createTestMoldsWithQR();
     const molds = await createSampleMolds();
     const repairs = await createSampleRepairs();
     
     console.log('✅ Sample data creation completed!');
-    console.log(`   - Molds: ${molds.length}`);
+    console.log(`   - Test Molds (with QR): ${testMolds.length}`);
+    console.log(`   - Sample Molds: ${molds.length}`);
     console.log(`   - Repairs: ${repairs.length}`);
     
-    return { molds, repairs };
+    return { testMolds, molds, repairs };
   } catch (error) {
     console.error('❌ Error creating sample data:', error);
     throw error;
