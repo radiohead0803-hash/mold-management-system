@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
 import { ArrowLeft, Upload, Camera, Save, AlertCircle } from 'lucide-react';
 
 interface MoldBasicInfo {
@@ -72,7 +73,7 @@ const HardnessMeasurement: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('qr_session_token');
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -105,7 +106,7 @@ const HardnessMeasurement: React.FC = () => {
       }
 
       // 기존 경도측정 데이터 로드 (있는 경우)
-      const hardnessResponse = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/hardness`, {
+      const hardnessResponse = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/hardness`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -150,7 +151,7 @@ const HardnessMeasurement: React.FC = () => {
         measuredAt: new Date().toISOString()
       };
 
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/hardness`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/hardness`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

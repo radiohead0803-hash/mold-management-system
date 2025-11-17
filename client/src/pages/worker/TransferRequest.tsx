@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Send, Upload, CheckCircle, Clock, FileText } from 'lucide-react';
+import { API_BASE_URL } from '../../config/api';
 
 interface MoldInfo {
   moldId: string;
@@ -57,7 +58,7 @@ const TransferRequest: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('qr_session_token');
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -109,7 +110,7 @@ const TransferRequest: React.FC = () => {
         requestedAt: new Date().toISOString()
       };
 
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/transfer-request`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/transfer-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

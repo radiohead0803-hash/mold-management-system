@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Clock, XCircle, Package } from 'lucide-react';
+import { API_BASE_URL } from '../../config/api';
 
 interface TransferRecord {
   id: string;
@@ -28,7 +29,7 @@ const TransferStatus: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('qr_session_token');
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/transfer-status`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/transfer-status`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

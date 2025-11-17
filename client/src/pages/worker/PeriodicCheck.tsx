@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
 import { 
   ArrowLeft, CheckCircle, AlertTriangle, Camera, Save,
   HelpCircle, Info, Calendar, AlertCircle
@@ -78,7 +79,7 @@ const PeriodicCheck: React.FC = () => {
   const fetchMoldInfo = async () => {
     try {
       const token = localStorage.getItem('qr_session_token');
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('금형 정보를 불러올 수 없습니다.');
@@ -318,7 +319,7 @@ const PeriodicCheck: React.FC = () => {
         overallResult: checkResult,
         location: moldInfo?.location || '미확인'
       };
-      const response = await fetch(`http://localhost:5001/api/worker/periodic-inspection`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/periodic-inspection`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(inspectionData)

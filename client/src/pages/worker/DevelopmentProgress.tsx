@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
 import { ArrowLeft, Save, CheckCircle, AlertCircle, Plus, Trash2, Upload, X, FileText, Clock, CheckSquare } from 'lucide-react';
 
 interface MoldInfo {
@@ -139,7 +140,7 @@ const DevelopmentProgress: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('qr_session_token');
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -165,7 +166,7 @@ const DevelopmentProgress: React.FC = () => {
       }
 
       // 기존 개발진행 데이터 로드
-      const progressResponse = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/development-progress`, {
+      const progressResponse = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/development-progress`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -241,7 +242,7 @@ const DevelopmentProgress: React.FC = () => {
         submittedAt: new Date().toISOString()
       };
 
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/development-progress`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/development-progress`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

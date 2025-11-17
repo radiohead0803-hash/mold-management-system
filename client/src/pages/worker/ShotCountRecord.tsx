@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
 import { 
   ArrowLeft, 
   Save,
@@ -81,7 +82,7 @@ const ShotCountRecord: React.FC = () => {
         throw new Error('QR 세션이 만료되었습니다.');
       }
 
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -201,7 +202,7 @@ const ShotCountRecord: React.FC = () => {
       };
 
       // Mock API 호출
-      const response = await fetch('http://localhost:5001/api/worker/shot-record', {
+      const response = await fetch('${API_BASE_URL}/api/worker/shot-record', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
