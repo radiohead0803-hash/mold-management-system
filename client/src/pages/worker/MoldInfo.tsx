@@ -27,6 +27,7 @@ import {
   Droplet,
   Thermometer
 } from 'lucide-react';
+import { API_BASE_URL } from '../../config/api';
 
 interface MoldData {
   id: number;
@@ -195,7 +196,7 @@ const MoldInfo: React.FC = () => {
       const token = localStorage.getItem('qr_session_token');
       console.log('QR 세션 토큰:', token ? '존재함' : '없음');
 
-      const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}`, {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
@@ -299,7 +300,7 @@ const MoldInfo: React.FC = () => {
       formData.append('imageType', type);
 
       // TODO: Replace with actual API endpoint
-      // const response = await fetch('http://localhost:5001/api/mold/upload-image', {
+      // const response = await fetch(`${API_BASE_URL}/api/mold/upload-image`, {
       //   method: 'POST',
       //   body: formData
       // });
@@ -341,7 +342,7 @@ const MoldInfo: React.FC = () => {
     setHistoryLoading(true);
     try {
       // TODO: API 호출로 실제 데이터 가져오기
-      // const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/daily-checks`);
+      // const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/daily-checks`);
       // const data = await response.json();
       
       // 임시 더미 데이터
@@ -463,7 +464,7 @@ const MoldInfo: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       // TODO: API 호출로 실제 알림 데이터 가져오기
-      // const response = await fetch(`http://localhost:5001/api/worker/mold/${moldId}/notifications`);
+      // const response = await fetch(`${API_BASE_URL}/api/worker/mold/${moldId}/notifications`);
       // const data = await response.json();
       
       // 임시 더미 알림 데이터

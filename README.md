@@ -86,6 +86,28 @@ cd client && npm run dev
 cd server && npm run dev
 ```
 
+### 환경 변수 설정
+
+#### 프론트엔드 (client/.env.development)
+```bash
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+#### 백엔드 (server/.env)
+```bash
+PORT=5000
+CLIENT_URL=http://localhost:3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mold_management
+DB_USER=postgres
+DB_PASSWORD=password
+JWT_SECRET=your-secret-key
+```
+
+자세한 설정은 `server/.env.example` 및 `client/.env.example` 참조
+```
+
 ### 프로덕션 배포 (Railway)
 
 #### 빠른 시작
