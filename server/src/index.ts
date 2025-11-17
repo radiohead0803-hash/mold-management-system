@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { sequelize } from './models';
 import { createDemoUsers } from './seeders/createDemoUsers';
+import { createAllSampleData } from './seeders/createSampleData';
 
 // Load environment variables
 dotenv.config();
@@ -85,6 +86,13 @@ const startServer = async () => {
       
       // Create demo users if they don't exist
       await createDemoUsers();
+      
+      // Create sample data (only in production, once)
+      const shouldCreateSampleData = process.env.CREATE_SAMPLE_DATA === 'true';
+      if (shouldCreateSampleData) {
+        console.log('📦 Creating sample data...');
+        await createAllSampleData();
+      }
     } else {
       // Default behavior
       await sequelize.sync();
