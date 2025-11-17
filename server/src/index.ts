@@ -14,12 +14,18 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet());
+
+// CORS 설정
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  process.env.CLIENT_URL || ''
+].filter(Boolean);
+
+console.log('🔒 CORS allowed origins:', allowedOrigins);
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    process.env.CLIENT_URL || ''
-  ].filter(Boolean),
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(morgan('combined'));
